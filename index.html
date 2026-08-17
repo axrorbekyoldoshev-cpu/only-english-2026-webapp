@@ -56,6 +56,7 @@ body.desktop .brand,body.desktop .stepper{max-width:680px}
 .stepper-dot.current{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,var(--bg))}
 .stepper-line{flex:none;width:14px;height:2px;background:var(--border)}
 .stepper-line.done{background:var(--good)}
+.stepper-dot.clickable{cursor:pointer}
 
 .step-shell{animation:fadeIn .3s ease both}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -110,6 +111,7 @@ input.field-invalid:focus,textarea.field-invalid:focus{box-shadow:0 0 0 3px rgba
 .checkpoint-icon{width:56px;height:56px;border-radius:16px;background:color-mix(in srgb,var(--accent) 14%,var(--bg));display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:12px}
 .checkpoint-desc{color:var(--text);font-size:14px;line-height:1.55;margin:0 0 4px}
 .checkpoint-done{display:flex;align-items:center;gap:8px;color:var(--good);font-weight:700;font-size:13.5px;margin-top:14px}
+.checkpoint-btn{margin-top:14px;width:100%;padding:13px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-text);font-weight:800;font-size:14px;cursor:pointer}
 
 /* Review */
 .review-row{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13.5px}
@@ -383,7 +385,7 @@ function fireCheckpoint(step){
   if(!inTelegram){
     state[step.doneFlag] = true;
     showToast("Test rejimida: qabul qilingan deb belgilandi", "info");
-    goNext();
+    render();
     return;
   }
   tg.sendData(JSON.stringify({type:"checkpoint", step: step.checkpoint, data: textPayload()}));
@@ -534,6 +536,11 @@ function renderCheckpoint(step, card){
   if(state[step.doneFlag]){
     card.insertAdjacentHTML("beforeend", `<div class="checkpoint-done">✅ Qabul qilindi</div>`);
   }
+  if(isDesktop){
+    const btn = el(`<button type="button" class="checkpoint-btn">${state[step.doneFlag] ? "🔁 Qayta yuklash" : step.buttonLabel}</button>`);
+    btn.onclick = ()=> fireCheckpoint(step);
+    card.appendChild(btn);
+  }
 }
 
 function renderReview(step, card){
@@ -596,7 +603,79 @@ function renderStepper(groups, idx){
   if(activeDot && activeDot.scrollIntoView) activeDot.scrollIntoView({inline:"center", block:"nearest"});
 }
 
-function render(){
+function renderGroupInto(group, card){
+  if(group.length === 1){
+    const step = findStep(group[0]);
+    card.insertAdjacentHTML("beforeend", renderHeader(step));
+    renderStepBody(step, card, false);
+  } else {
+    card.insertAdjacentHTML("beforeend", `<p class="step-eyebrow">Bosqich</p><h2 class="step-title">Ariza ma'lumotlari</h2><p class="step-hint">Quyidagi maydonlarni to‘ldiring</p>`);
+    const grid = el(`<div class="multi-grid"></div>`);
+    group.forEach(id=>{
+      const step = findStep(id);
+      const wide = step.kind==="section" || step.kind==="direction" || step.kind==="chips";
+      const block = el(`<div class="field-block${wide?" span2":""}"></div>`);
+      block.insertAdjacentHTML("beforeend", `<label class="field-label">${step.title}</label>`);
+      if(step.hint) block.insertAdjacentHTML("beforeend", `<p class="field-block-hint">${step.hint}</p>`);
+      renderStepBody(step, block, false);
+      grid.appendChild(block);
+    });
+    card.appendChild(grid);
+  }
+}
+
+/* Desktop: the wide window has room to show every section at once as a
+   scrollable page, instead of one section per screen. */
+function renderDesktopFull(){
+  const groups = visibleGroups();
+  stepperBox.innerHTML = "";
+  groups.forEach((g,i)=>{
+    if(g[0]==="review") return;
+    if(i>0) stepperBox.appendChild(el(`<div class="stepper-line done"></div>`));
+    const dot = el(`<div class="stepper-dot done clickable">${i+1}</div>`);
+    dot.onclick = ()=>{
+      const target = document.getElementById("card_"+g[0]);
+      if(target) target.scrollIntoView({behavior:"smooth", block:"start"});
+    };
+    stepperBox.appendChild(dot);
+  });
+
+  shell.innerHTML = "";
+  groups.forEach(group=>{
+    if(group[0]==="review") return;
+    const card = el(`<div class="card" id="card_${group[0]}"></div>`);
+    renderGroupInto(group, card);
+    shell.appendChild(card);
+  });
+
+  backBtn.style.visibility = "hidden";
+  try{ tg.BackButton.hide(); }catch(e){}
+  primaryBtn.textContent = "✅ Yuborish";
+  primaryBtn.disabled = false;
+  primaryBtn.onclick = ()=>{
+    let firstBad = null;
+    groups.forEach(g=>{
+      if(g[0]==="review") return;
+      touchGroup(g);
+      if(!firstBad && !groupValid(g)) firstBad = g;
+    });
+    if(firstBad){
+      hapticNotify("error");
+      showToast("Iltimos, belgilangan maydonlarni to‘g‘rilang");
+      const el2 = document.getElementById("card_"+firstBad[0]);
+      if(el2) el2.scrollIntoView({behavior:"smooth", block:"center"});
+      return;
+    }
+    sendFinal();
+  };
+
+  if(currentId){
+    const anchor = document.getElementById("card_"+currentId) || document.getElementById("card_"+(groups.find(g=>g.includes(currentId))||[])[0]);
+    if(anchor) setTimeout(()=>anchor.scrollIntoView({block:"start"}), 60);
+  }
+}
+
+function renderWizardStep(){
   const groups = visibleGroups();
   let idx = groups.findIndex(g => g.includes(currentId));
   if(idx === -1){ idx = 0; currentId = groups[0][0]; }
@@ -613,18 +692,7 @@ function render(){
     card.insertAdjacentHTML("beforeend", renderHeader(step));
     renderStepBody(step, card, true);
   } else {
-    card.insertAdjacentHTML("beforeend", `<p class="step-eyebrow">Bosqich</p><h2 class="step-title">Ariza ma'lumotlari</h2><p class="step-hint">Quyidagi maydonlarni to‘ldiring</p>`);
-    const grid = el(`<div class="multi-grid"></div>`);
-    group.forEach(id=>{
-      const step = findStep(id);
-      const wide = step.kind==="section" || step.kind==="direction" || step.kind==="chips";
-      const block = el(`<div class="field-block${wide?" span2":""}"></div>`);
-      block.insertAdjacentHTML("beforeend", `<label class="field-label">${step.title}</label>`);
-      if(step.hint) block.insertAdjacentHTML("beforeend", `<p class="field-block-hint">${step.hint}</p>`);
-      renderStepBody(step, block, false);
-      grid.appendChild(block);
-    });
-    card.appendChild(grid);
+    renderGroupInto(group, card);
   }
   shell.appendChild(card);
 
@@ -666,6 +734,7 @@ function render(){
 }
 
 function syncPrimary(group){
+  if(isDesktop) return;
   const g = group || visibleGroups().find(gr=>gr.includes(currentId));
   if(!g) return;
   const anySoloSpecial = g.length===1 && ["checkpoint","review","section","direction","chips","picker"].includes(findStep(g[0]).kind);
@@ -674,6 +743,11 @@ function syncPrimary(group){
     const step = findStep(id);
     return step.optional || isStepComplete(step);
   });
+}
+
+function render(){
+  if(isDesktop) renderDesktopFull();
+  else renderWizardStep();
 }
 
 backBtn.onclick = goBack;
