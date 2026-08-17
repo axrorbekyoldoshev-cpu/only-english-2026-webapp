@@ -317,6 +317,7 @@ function applyResume(){
   return step;
 }
 let currentId = applyResume() || "full_name";
+let resumeScrollDone = false;
 if(!findStep(currentId)) currentId = "full_name";
 
 function textPayload(){
@@ -672,7 +673,8 @@ function renderDesktopFull(){
     sendFinal();
   };
 
-  if(currentId){
+  if(currentId && !resumeScrollDone){
+    resumeScrollDone = true;
     const anchor = document.getElementById("card_"+currentId) || document.getElementById("card_"+(groups.find(g=>g.includes(currentId))||[])[0]);
     if(anchor) setTimeout(()=>anchor.scrollIntoView({block:"start"}), 60);
   }
