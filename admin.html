@@ -8,12 +8,14 @@
 <style>
 :root{
   --fb-bg:#f1f3f6;--fb-card:#ffffff;--fb-text:#12161c;--fb-hint:#6b7684;
-  --fb-accent:#2481cc;--fb-accent-text:#ffffff;--fb-border:rgba(15,20,25,.12);--fb-danger:#e5484d;--fb-good:#2fae5c;--fb-warn:#c98a1a;
+  --fb-accent:#2481cc;--fb-accent-text:#ffffff;--fb-border:rgba(15,20,25,.12);
+  --fb-danger:#e5484d;--fb-good:#2fae5c;--fb-warn:#c98a1a;
 }
 @media (prefers-color-scheme:dark){
   :root{
     --fb-bg:#0f1216;--fb-card:#1a1f26;--fb-text:#eef1f5;--fb-hint:#8a94a1;
-    --fb-accent:#4da3e0;--fb-accent-text:#0b0f13;--fb-border:rgba(255,255,255,.12);--fb-danger:#ff6b6f;--fb-good:#3ecb75;--fb-warn:#e0a83c;
+    --fb-accent:#4da3e0;--fb-accent-text:#0b0f13;--fb-border:rgba(255,255,255,.12);
+    --fb-danger:#ff6b6f;--fb-good:#3ecb75;--fb-warn:#e0a83c;
   }
 }
 :root{
@@ -29,38 +31,57 @@
 html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding-bottom:96px}
 .wrap{max-width:640px;margin:0 auto;padding:0 16px}
+
 .topbar{position:sticky;top:0;z-index:20;background:var(--bg);padding:calc(env(safe-area-inset-top) + 14px) 16px 12px;box-shadow:0 1px 0 var(--border)}
-.topbar-inner{max-width:640px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
-.topbar h1{font-size:17px;margin:0}
-.topbar .count{color:var(--hint);font-size:12.5px;margin-top:2px}
+.topbar-inner{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.topbar-icon{width:36px;height:36px;border-radius:11px;background:var(--accent);background:linear-gradient(140deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#7a4de0));display:flex;align-items:center;justify-content:center;font-size:17px;flex:none}
+.topbar h1{font-size:16px;margin:0}
+.topbar .count{color:var(--hint);font-size:12px;margin-top:1px}
 
-.card{background:var(--card);border:1px solid var(--border);border-radius:16px;margin-top:12px;overflow:hidden}
-.hint-card{padding:18px;color:var(--hint);font-size:13.5px;text-align:center}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;margin-top:12px;overflow:hidden;animation:cardIn .25s ease both}
+@keyframes cardIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.hint-card{padding:22px 18px;color:var(--hint);font-size:13.5px;text-align:center}
 
-.app-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;cursor:pointer}
-.app-name{font-weight:800;font-size:14.5px}
-.app-sub{color:var(--hint);font-size:12.5px;margin-top:2px}
-.chev{color:var(--hint);flex:none;transition:transform .15s}
+.app-head{display:flex;align-items:center;gap:12px;padding:13px 15px;cursor:pointer}
+.avatar{flex:none;width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;color:#fff}
+.app-info{flex:1;min-width:0}
+.app-name{font-weight:800;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app-sub{color:var(--hint);font-size:12px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chev{color:var(--hint);flex:none;transition:transform .18s;font-size:13px}
 .chev.open{transform:rotate(180deg)}
 
-.app-body{padding:0 16px 16px}
+.app-body{padding:0 15px 15px;animation:bodyIn .2s ease both}
+@keyframes bodyIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+.pill-row{display:flex;flex-wrap:wrap;gap:6px;padding-bottom:10px;border-bottom:1px solid var(--border);margin-bottom:6px}
+.pill{padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:700;background:color-mix(in srgb,var(--accent) 14%,var(--bg));color:var(--accent)}
+
 .detail-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:13px}
 .detail-row .k{color:var(--hint);flex:none}
 .detail-row .v{text-align:right;font-weight:600}
 
-.ghost-btn{width:100%;margin-top:12px;padding:11px;border-radius:11px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-weight:700;font-size:13px;cursor:pointer}
+.ghost-btn{width:100%;margin-top:10px;padding:11px;border-radius:11px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-weight:700;font-size:13px;cursor:pointer}
+.ghost-btn:active{transform:scale(.98)}
 
 .app-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
-.act-btn{flex:1 1 auto;min-width:120px;padding:11px 10px;border-radius:11px;border:0;font-weight:800;font-size:13px;cursor:pointer;color:#fff}
+.act-btn{flex:1 1 auto;min-width:104px;padding:12px 10px;border-radius:11px;border:0;font-weight:800;font-size:13px;cursor:pointer;color:#fff;transition:transform .1s,opacity .15s}
 .act-btn.approve{background:var(--good)}
 .act-btn.reject{background:var(--danger)}
 .act-btn.revise{background:var(--warn)}
-.act-btn:active{transform:scale(.98)}
+.act-btn:active{transform:scale(.97)}
 
-.note-wrap{margin-top:12px;display:none}
-.note-input{width:100%;min-height:80px;padding:12px 13px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font:inherit;resize:vertical}
+.confirm-box{margin-top:12px;padding:13px;border-radius:12px;background:color-mix(in srgb,var(--good) 12%,var(--bg));border:1.5px solid color-mix(in srgb,var(--good) 35%,var(--border))}
+.confirm-box.danger{background:color-mix(in srgb,var(--danger) 10%,var(--bg));border-color:color-mix(in srgb,var(--danger) 30%,var(--border))}
+.confirm-box.warn{background:color-mix(in srgb,var(--warn) 12%,var(--bg));border-color:color-mix(in srgb,var(--warn) 32%,var(--border))}
+.confirm-text{font-size:13px;font-weight:700;margin:0 0 10px}
+.confirm-row{display:flex;gap:8px}
+.confirm-row .act-btn{flex:1}
+.confirm-row .cancel-btn{flex:1;padding:12px 10px;border-radius:11px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font-weight:700;font-size:13px;cursor:pointer}
+
+.note-input{width:100%;min-height:78px;padding:11px 12px;border-radius:11px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font:inherit;resize:vertical;margin-bottom:10px}
 .note-input:focus{outline:none;border-color:var(--accent)}
-.confirm-note{width:100%;margin-top:8px;padding:12px;border:0;border-radius:11px;background:var(--accent);color:var(--accent-text);font-weight:800;font-size:13.5px;cursor:pointer}
+
+.sending{position:relative;pointer-events:none;opacity:.7}
 
 .navbar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,var(--bg) 30%);z-index:15}
 .navbar-inner{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:10px}
@@ -73,8 +94,9 @@ body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMa
 
 <div class="topbar">
   <div class="topbar-inner">
+    <div class="topbar-icon">🔐</div>
     <div>
-      <h1>🔐 Kutilayotgan arizalar</h1>
+      <h1>Kutilayotgan arizalar</h1>
       <p class="count" id="count">—</p>
     </div>
   </div>
@@ -94,7 +116,7 @@ body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMa
 
 <script>
 const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : {
-  ready(){}, expand(){}, close(){}, sendData(){}, setHeaderColor(){},
+  ready(){}, expand(){}, close(){}, sendData(){}, setHeaderColor(){}, openLink(){},
   HapticFeedback:{ impactOccurred(){}, notificationOccurred(){}, selectionChanged(){} },
   MainButton:{ hide(){} },
 };
@@ -105,6 +127,7 @@ try{ tg.MainButton && tg.MainButton.hide(); }catch(e){}
 
 function hapticSelect(){ try{ tg.HapticFeedback.selectionChanged(); }catch(e){} }
 function hapticNotify(kind){ try{ tg.HapticFeedback.notificationOccurred(kind); }catch(e){} }
+function hapticImpact(kind){ try{ tg.HapticFeedback.impactOccurred(kind||"medium"); }catch(e){} }
 
 function b64urlDecode(s){
   s = s.replace(/-/g,"+").replace(/_/g,"/");
@@ -114,6 +137,17 @@ function b64urlDecode(s){
 
 function escapeHtml(s){
   return (s==null?"":String(s)).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+
+function initials(name){
+  const parts = (name||"").trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return "?";
+  return (parts[0][0] + (parts[1] ? parts[1][0] : "")).toUpperCase();
+}
+
+const AVATAR_COLORS = ["#2481cc","#7a4de0","#2fae5c","#c98a1a","#e5484d","#0f9b8e","#c2427a"];
+function avatarColor(id){
+  return AVATAR_COLORS[Math.abs(Number(id)||0) % AVATAR_COLORS.length];
 }
 
 const params = new URLSearchParams(location.search);
@@ -132,7 +166,8 @@ const pageInfoEl = document.getElementById("page_info");
 const prevBtn = document.getElementById("prev_btn");
 const nextBtn = document.getElementById("next_btn");
 
-function send(action, extra){
+function send(action, extra, sourceEl){
+  if(sourceEl) sourceEl.classList.add("sending");
   const payload = Object.assign({
     action,
     offset: snapshot ? snapshot.offset : 0,
@@ -151,82 +186,104 @@ function renderMessage(msg){
 }
 
 function buildBody(app, body){
+  const pillRow = document.createElement("div");
+  pillRow.className = "pill-row";
+  [app.role, app.performance].filter(Boolean).forEach(text=>{
+    pillRow.appendChild(el(`<span class="pill">${escapeHtml(text)}</span>`));
+  });
+  body.appendChild(pillRow);
+
   const rows = [
-    ["Status", app.role], ["Telefon", app.phone], ["Ilmiy rahbar", app.supervisor],
-    ["Rahbar lavozimi", app.head_position], ["Qatnashish turi", app.performance],
-    ["Ma'ruza mavzusi", app.report_title], ["Telegram akkaunt", app.telegram_account],
-    ["Taklif/savollar", app.suggestions], ["Yuborilgan vaqt", app.created_at],
+    ["Telefon", app.phone], ["Ilmiy rahbar", app.supervisor],
+    ["Rahbar lavozimi", app.head_position], ["Ma'ruza mavzusi", app.report_title],
+    ["Telegram akkaunt", app.telegram_account], ["Taklif/savollar", app.suggestions],
+    ["Yuborilgan vaqt", app.created_at],
   ];
-  const details = document.createElement("div");
   rows.forEach(([k, v])=>{
     if(!v) return;
-    const row = document.createElement("div");
-    row.className = "detail-row";
-    row.innerHTML = `<span class="k">${escapeHtml(k)}</span><span class="v">${escapeHtml(v)}</span>`;
-    details.appendChild(row);
+    body.appendChild(el(`<div class="detail-row"><span class="k">${escapeHtml(k)}</span><span class="v">${escapeHtml(v)}</span></div>`));
   });
-  body.appendChild(details);
 
-  const filesBtn = document.createElement("button");
-  filesBtn.type = "button";
-  filesBtn.className = "ghost-btn";
-  filesBtn.textContent = "📎 Fayllarni botda ko‘rish";
-  filesBtn.onclick = (e)=>{ e.stopPropagation(); send("view_files", {application_id: app.id}); };
+  const filesBtn = el(`<button type="button" class="ghost-btn">📎 Fayllarni botda ko‘rish</button>`);
+  filesBtn.onclick = (e)=>{ e.stopPropagation(); hapticImpact("light"); send("view_files", {application_id: app.id}, filesBtn); };
   body.appendChild(filesBtn);
 
   if(app.drive_url){
-    const driveBtn = document.createElement("button");
-    driveBtn.type = "button";
-    driveBtn.className = "ghost-btn";
-    driveBtn.textContent = "🗂 Google Drive papkasini ochish";
+    const driveBtn = el(`<button type="button" class="ghost-btn">🗂 Google Drive papkasini ochish</button>`);
     driveBtn.onclick = (e)=>{
       e.stopPropagation();
+      hapticImpact("light");
       try{ tg.openLink(app.drive_url); }catch(err){ window.open(app.drive_url, "_blank"); }
     };
     body.appendChild(driveBtn);
   }
 
-  const actions = document.createElement("div");
-  actions.className = "app-actions";
-  const approveBtn = document.createElement("button");
-  approveBtn.type = "button"; approveBtn.className = "act-btn approve"; approveBtn.textContent = "✅ Qabul qilish";
-  const rejectBtn = document.createElement("button");
-  rejectBtn.type = "button"; rejectBtn.className = "act-btn reject"; rejectBtn.textContent = "❌ Rad etish";
-  const reviseBtn = document.createElement("button");
-  reviseBtn.type = "button"; reviseBtn.className = "act-btn revise"; reviseBtn.textContent = "✏️ Tuzatishga qaytarish";
+  const actions = el(`<div class="app-actions"></div>`);
+  const approveBtn = el(`<button type="button" class="act-btn approve">✅ Qabul qilish</button>`);
+  const rejectBtn = el(`<button type="button" class="act-btn reject">❌ Rad etish</button>`);
+  const reviseBtn = el(`<button type="button" class="act-btn revise">✏️ Tuzatishga qaytarish</button>`);
   actions.appendChild(approveBtn); actions.appendChild(rejectBtn); actions.appendChild(reviseBtn);
   body.appendChild(actions);
 
-  const noteWrap = document.createElement("div");
-  noteWrap.className = "note-wrap";
-  noteWrap.innerHTML = `<textarea class="note-input" placeholder="Izoh yozing..."></textarea><button type="button" class="confirm-note">Yuborish</button>`;
-  body.appendChild(noteWrap);
-  const noteInput = noteWrap.querySelector(".note-input");
-  const confirmBtn = noteWrap.querySelector(".confirm-note");
-  let pendingAction = null;
+  const zone = el(`<div></div>`);
+  body.appendChild(zone);
 
-  approveBtn.onclick = (e)=>{ e.stopPropagation(); hapticNotify("success"); send("approve", {application_id: app.id}); };
-  rejectBtn.onclick = (e)=>{
+  function clearZone(){ zone.innerHTML = ""; }
+
+  approveBtn.onclick = (e)=>{
     e.stopPropagation();
-    pendingAction = "reject";
-    confirmBtn.textContent = "❌ Rad etib, yuborish";
-    noteWrap.style.display = "block";
-    noteInput.focus();
+    hapticImpact("medium");
+    clearZone();
+    actions.style.display = "none";
+    const box = el(`
+      <div class="confirm-box">
+        <p class="confirm-text">✅ Ariza #${app.id} — ${escapeHtml(app.full_name)} qabul qilinsinmi?</p>
+        <div class="confirm-row">
+          <button type="button" class="cancel-btn">Bekor qilish</button>
+          <button type="button" class="act-btn approve">Ha, qabul qilish</button>
+        </div>
+      </div>
+    `);
+    box.querySelector(".cancel-btn").onclick = (ev)=>{ ev.stopPropagation(); clearZone(); actions.style.display = "flex"; };
+    box.querySelector(".act-btn.approve").onclick = (ev)=>{
+      ev.stopPropagation();
+      hapticNotify("success");
+      send("approve", {application_id: app.id}, box);
+    };
+    zone.appendChild(box);
   };
-  reviseBtn.onclick = (e)=>{
-    e.stopPropagation();
-    pendingAction = "revise";
-    confirmBtn.textContent = "✏️ Tuzatishga qaytarib, yuborish";
-    noteWrap.style.display = "block";
-    noteInput.focus();
-  };
-  confirmBtn.onclick = (e)=>{
-    e.stopPropagation();
-    const note = noteInput.value.trim();
-    if(!note){ hapticNotify("error"); noteInput.focus(); return; }
-    send(pendingAction, {application_id: app.id, note});
-  };
+
+  function openNoteConfirm(kind){
+    clearZone();
+    actions.style.display = "none";
+    const isReject = kind === "reject";
+    const box = el(`
+      <div class="confirm-box ${isReject ? "danger" : "warn"}">
+        <p class="confirm-text">${isReject ? "❌ Rad etish sababini yozing" : "✏️ Qanday tuzatish kerakligini yozing"}</p>
+        <textarea class="note-input" placeholder="Izoh..."></textarea>
+        <div class="confirm-row">
+          <button type="button" class="cancel-btn">Bekor qilish</button>
+          <button type="button" class="act-btn ${isReject ? "reject" : "revise"}">${isReject ? "Rad etib, yuborish" : "Qaytarib, yuborish"}</button>
+        </div>
+      </div>
+    `);
+    const textarea = box.querySelector(".note-input");
+    box.querySelector(".cancel-btn").onclick = (ev)=>{ ev.stopPropagation(); clearZone(); actions.style.display = "flex"; };
+    box.querySelector(".act-btn").onclick = (ev)=>{
+      ev.stopPropagation();
+      const note = textarea.value.trim();
+      if(!note){ hapticNotify("error"); textarea.focus(); return; }
+      send(kind, {application_id: app.id, note}, box);
+    };
+    zone.appendChild(box);
+    setTimeout(()=>textarea.focus(), 50);
+  }
+
+  rejectBtn.onclick = (e)=>{ e.stopPropagation(); hapticImpact("light"); openNoteConfirm("reject"); };
+  reviseBtn.onclick = (e)=>{ e.stopPropagation(); hapticImpact("light"); openNoteConfirm("revise"); };
 }
+
+function el(html){ const t=document.createElement("template"); t.innerHTML=html.trim(); return t.content.firstChild; }
 
 function renderList(){
   if(!snapshot){
@@ -249,24 +306,25 @@ function renderList(){
 
   listEl.innerHTML = "";
   if(!snapshot.apps.length){
-    renderMessage("Kutilayotgan arizalar yo‘q.");
+    renderMessage("Kutilayotgan arizalar yo‘q. 🎉");
     return;
   }
-  snapshot.apps.forEach(app=>{
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
+  snapshot.apps.forEach((app, i)=>{
+    const card = el(`<div class="card"></div>`);
+    card.style.animationDelay = Math.min(i * 40, 240) + "ms";
+    const head = el(`
       <div class="app-head">
-        <div>
+        <div class="avatar" style="background:${avatarColor(app.id)}">${escapeHtml(initials(app.full_name))}</div>
+        <div class="app-info">
           <div class="app-name">#${app.id} — ${escapeHtml(app.full_name)}</div>
           <div class="app-sub">${escapeHtml(app.university)}</div>
           <div class="app-sub">${escapeHtml(app.section)} — ${escapeHtml(app.direction)}</div>
         </div>
         <div class="chev">▾</div>
       </div>
-    `;
-    const head = card.querySelector(".app-head");
-    const chev = card.querySelector(".chev");
+    `);
+    card.appendChild(head);
+    const chev = head.querySelector(".chev");
     let body = null;
     head.onclick = ()=>{
       hapticSelect();
@@ -276,8 +334,7 @@ function renderList(){
         chev.classList.toggle("open", !open);
         return;
       }
-      body = document.createElement("div");
-      body.className = "app-body";
+      body = el(`<div class="app-body"></div>`);
       card.appendChild(body);
       buildBody(app, body);
       chev.classList.add("open");
@@ -286,8 +343,8 @@ function renderList(){
   });
 }
 
-prevBtn.onclick = ()=>{ if(!prevBtn.disabled) send("prev_page"); };
-nextBtn.onclick = ()=>{ if(!nextBtn.disabled) send("next_page"); };
+prevBtn.onclick = ()=>{ if(!prevBtn.disabled){ hapticImpact("light"); send("prev_page"); } };
+nextBtn.onclick = ()=>{ if(!nextBtn.disabled){ hapticImpact("light"); send("next_page"); } };
 
 renderList();
 </script>
