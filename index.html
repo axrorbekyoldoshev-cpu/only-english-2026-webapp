@@ -33,10 +33,13 @@ body{
   padding-bottom:104px;
 }
 .wrap{max-width:520px;margin:0 auto;padding:0 16px}
+body.desktop .wrap{max-width:680px}
+body.desktop .navbar-inner{max-width:680px}
+body.desktop .brand,body.desktop .stepper{max-width:680px}
 
 /* Top bar */
 .topbar{position:sticky;top:0;z-index:20;background:var(--bg);padding-top:calc(env(safe-area-inset-top) + 14px);box-shadow:0 1px 0 var(--border)}
-.brand{display:flex;align-items:center;gap:12px;padding:0 16px 14px;max-width:520px;margin:0 auto}
+.brand{display:flex;align-items:center;gap:12px;padding:0 16px 12px;max-width:520px;margin:0 auto}
 .brand-badge{
   flex:none;width:38px;height:38px;border-radius:11px;background:var(--accent);
   background:linear-gradient(140deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#7a4de0));
@@ -44,8 +47,15 @@ body{
 }
 .brand h1{font-size:16px;margin:0;line-height:1.25}
 .brand p{margin:2px 0 0;color:var(--hint);font-size:12px}
-.progress-track{height:4px;background:var(--border);overflow:hidden}
-.progress-fill{height:100%;width:0%;background:var(--accent);background:linear-gradient(90deg,var(--accent),color-mix(in srgb,var(--accent) 60%,#7a4de0));transition:width .3s ease}
+
+/* Stepper */
+.stepper{display:flex;align-items:center;gap:0;overflow-x:auto;padding:0 16px 12px;max-width:520px;margin:0 auto;scrollbar-width:none}
+.stepper::-webkit-scrollbar{display:none}
+.stepper-dot{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:var(--hint);background:var(--bg);transition:.15s}
+.stepper-dot.done{background:var(--good);border-color:var(--good);color:#fff;cursor:pointer}
+.stepper-dot.current{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 16%,var(--bg))}
+.stepper-line{flex:none;width:14px;height:2px;background:var(--border)}
+.stepper-line.done{background:var(--good)}
 
 .step-shell{animation:fadeIn .3s ease both}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -54,6 +64,15 @@ body{
 .step-eyebrow{color:var(--hint);font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:0 0 4px}
 .step-title{font-size:19px;font-weight:800;margin:0 0 6px}
 .step-hint{color:var(--hint);font-size:13px;margin:0 0 16px}
+
+body.desktop .multi-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 18px}
+body.desktop .multi-grid .span2{grid-column:1 / -1}
+.field-block{margin-bottom:18px}
+.field-block:last-child{margin-bottom:0}
+.field-label{display:block;font-size:12.5px;font-weight:700;margin:0 0 4px}
+.field-label .opt{color:var(--hint);font-weight:500}
+.field-block-hint{color:var(--hint);font-size:11.5px;margin:0 0 7px}
+.field-error{color:var(--danger);font-size:12px;margin:6px 0 0;min-height:14px}
 
 /* Fields */
 input[type=text],textarea{
@@ -66,6 +85,8 @@ input:focus,textarea:focus{
   box-shadow:0 0 0 3px rgba(36,129,204,.2);
   box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent);
 }
+input.field-invalid,textarea.field-invalid{border-color:var(--danger)}
+input.field-invalid:focus,textarea.field-invalid:focus{box-shadow:0 0 0 3px rgba(229,72,77,.2);box-shadow:0 0 0 3px color-mix(in srgb,var(--danger) 20%,transparent)}
 
 /* Chips */
 .chip-group{display:flex;flex-wrap:wrap;gap:8px}
@@ -108,7 +129,7 @@ input:focus,textarea:focus{
 .nav-btn:disabled{opacity:.4;cursor:not-allowed}
 .nav-btn:active:not(:disabled){transform:scale(.98)}
 
-.toast{position:fixed;left:50%;bottom:118px;transform:translate(-50%,10px);background:var(--danger);color:#fff;padding:11px 18px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:40;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.toast{position:fixed;left:50%;bottom:118px;transform:translate(-50%,10px);background:var(--danger);color:#fff;padding:11px 18px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:40;box-shadow:0 6px 18px rgba(0,0,0,.25);max-width:calc(100% - 32px);text-align:center}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 .toast.info{background:var(--accent)}
 
@@ -138,7 +159,7 @@ input:focus,textarea:focus{
       <p>Ilmiy-amaliy konferensiyaga ro‘yxatdan o‘tish</p>
     </div>
   </div>
-  <div class="progress-track"><div class="progress-fill" id="progress_fill"></div></div>
+  <div class="stepper" id="stepper"></div>
 </div>
 
 <div class="wrap">
@@ -177,15 +198,21 @@ try{ tg.setHeaderColor && tg.setHeaderColor('secondary_bg_color'); }catch(e){}
 try{ tg.MainButton && tg.MainButton.hide(); }catch(e){}
 const inTelegram = !!tg.initData;
 
+const DESKTOP_PLATFORMS = ["tdesktop", "macos", "web", "weba", "webk", "windows", "linux"];
+
 /* Desktop clients open Mini Apps in a small, resizable window by default.
    Lock those to a fixed full-screen window; phones already open effectively
    full-screen via expand(), so leave their native behavior untouched. */
 try{
-  const DESKTOP_PLATFORMS = ["tdesktop", "macos", "web", "weba", "webk", "windows", "linux"];
   if(typeof tg.requestFullscreen === "function" && DESKTOP_PLATFORMS.includes(tg.platform)){
     tg.requestFullscreen();
   }
 }catch(e){}
+
+/* On the larger desktop window, show several related fields on one screen
+   instead of one question per screen; phones keep the single-question flow. */
+const isDesktop = DESKTOP_PLATFORMS.includes(tg.platform) || (!inTelegram && window.innerWidth > 760);
+if(isDesktop) document.body.classList.add("desktop");
 
 function haptic(kind){ try{ tg.HapticFeedback.impactOccurred(kind||"light"); }catch(e){} }
 function hapticSelect(){ try{ tg.HapticFeedback.selectionChanged(); }catch(e){} }
@@ -221,13 +248,16 @@ const state = {
 function needsArticle(s){ return s.performance === "Publication only" || s.performance === "Presentation and publication"; }
 function needsPresentation(s){ return s.performance === "Presentation only" || s.performance === "Presentation and publication"; }
 
+const NAME_RE = /^[A-Za-z][A-Za-z .'-]*$/;
+const USERNAME_RE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;
+
 const STEP_DEFS = [
-  {id:"full_name", kind:"text", field:"full_name", title:"Ism-familiya", hint:"Ism-familiyani ingliz tilida yozing", placeholder:"Masalan: Aziz Yuldashev"},
+  {id:"full_name", kind:"text", field:"full_name", title:"Ism-familiya", hint:"Ism-familiyani ingliz tilida yozing", placeholder:"Masalan: Aziz Yuldashev", latinOnly:true, twoWords:true},
   {id:"passport", kind:"checkpoint", checkpoint:"passport", doneFlag:"passport_done", icon:"🪪", title:"Pasport", desc:"Pasport yoki ID karta nusxasini (PDF, JPG yoki PNG) botga yuborasiz. Fayl qabul qilingach, forma aynan shu yerdan davom etadi.", buttonLabel:"📎 Pasportni yuklash"},
   {id:"role", kind:"chips", field:"role", options:ROLES, title:"Status", hint:"Statusingizni tanlang"},
   {id:"phone", kind:"checkpoint", checkpoint:"phone", doneFlag:"phone_done", icon:"📱", title:"Telefon raqam", desc:"Telegram akkauntingizga tegishli telefon raqamni ulashasiz. Bot faqat shu akkauntga tegishli raqamni qabul qiladi.", buttonLabel:"📱 Raqamni yuborish"},
-  {id:"supervisor", kind:"text", field:"supervisor", title:"Ilmiy rahbar", hint:"Ism-familiyani ingliz tilida yozing", placeholder:"Rahbaringiz ism-familiyasi"},
-  {id:"head_position", kind:"text", field:"head_position", title:"Rahbar lavozimi", hint:"Lavozimni ingliz tilida yozing", placeholder:"Masalan: Professor, kafedra mudiri"},
+  {id:"supervisor", kind:"text", field:"supervisor", title:"Ilmiy rahbar", hint:"Ism-familiyani ingliz tilida yozing", placeholder:"Rahbaringiz ism-familiyasi", latinOnly:true, twoWords:true},
+  {id:"head_position", kind:"text", field:"head_position", title:"Rahbar lavozimi", hint:"Lavozimni ingliz tilida yozing", placeholder:"Masalan: Professor, kafedra mudiri", latinOnly:true},
   {id:"university", kind:"picker", field:"university", title:"Universitet", hint:"Ta'lim muassasangizni tanlang"},
   {id:"section", kind:"section", title:"Seksiya", hint:"10 seksiyadan faqat BITTASI tanlanadi"},
   {id:"direction", kind:"direction", title:"Yo‘nalish", hint:"Shu seksiya ichidan faqat BITTA yo‘nalish tanlanadi"},
@@ -235,13 +265,30 @@ const STEP_DEFS = [
   {id:"files", kind:"checkpoint", checkpoint:"files", doneFlag:"article_done", icon:"📄", title:"Maqola va antiplagiat", desc:"Maqolani (DOC/DOCX, bir nechta fayl bo‘lishi mumkin) va antiplagiat ma'lumotnomasini (PDF/JPG/PNG) botga yuborasiz.", buttonLabel:"📎 Fayllarni yuklash", when: needsArticle},
   {id:"report_title", kind:"text", field:"report_title", title:"Ma'ruza mavzusi", hint:"Taqdimot mavzusini kiriting", placeholder:"Ma'ruza mavzusi", when: needsPresentation},
   {id:"presentation", kind:"checkpoint", checkpoint:"presentation", doneFlag:"presentation_done", icon:"📊", title:"Taqdimot fayli", desc:"Taqdimotni PPT yoki PPTX faylida botga yuborasiz.", buttonLabel:"📎 Taqdimotni yuklash", when: needsPresentation},
-  {id:"telegram_account", kind:"text", field:"telegram_account", title:"Telegram akkaunt", hint:"Telegram foydalanuvchi nomingiz", placeholder:"@Yuldashev_A23"},
+  {id:"telegram_account", kind:"text", field:"telegram_account", title:"Telegram akkaunt", hint:"Telegram foydalanuvchi nomingiz", placeholder:"@Yuldashev_A23", isUsername:true},
   {id:"suggestions", kind:"textarea", field:"suggestions", title:"Takliflar", hint:"Taklif yoki savollar (ixtiyoriy)", placeholder:"Bo‘lmasa bo‘sh qoldiring", optional:true},
   {id:"review", kind:"review", title:"Tekshirish", hint:"Ma'lumotlarni tekshirib, yuboring"},
 ];
 
-function visibleSteps(){ return STEP_DEFS.filter(s => !s.when || s.when(state)); }
+/* Desktop merges consecutive plain-field steps onto one screen; phones get
+   each of those exploded back into their own single-question screen. */
+const GROUP_TEMPLATE = [
+  ["full_name"], ["passport"], ["role"], ["phone"],
+  ["supervisor","head_position","university","section","direction","performance"],
+  ["files"], ["report_title"], ["presentation"],
+  ["telegram_account","suggestions"], ["review"],
+];
+
 function findStep(id){ return STEP_DEFS.find(s=>s.id===id); }
+function applicable(id){ const s=findStep(id); return !!s && (!s.when || s.when(state)); }
+
+function visibleGroups(){
+  const raw = GROUP_TEMPLATE.map(ids => ids.filter(applicable)).filter(g => g.length);
+  if(isDesktop) return raw;
+  const exploded = [];
+  raw.forEach(g => g.forEach(id => exploded.push([id])));
+  return exploded;
+}
 
 function b64urlDecode(s){
   s = s.replace(/-/g,"+").replace(/_/g,"/");
@@ -284,28 +331,52 @@ function isStepComplete(step){
   return true;
 }
 
+/* Format checks beyond "is it filled in" — catches the mistakes people
+   actually make (wrong script, single word, malformed @username). */
+function validateField(step){
+  if(!step) return {valid:true};
+  if(!isStepComplete(step)) return {valid:false, message:"Bu maydon majburiy"};
+  if(step.kind!=="text") return {valid:true};
+  const val = (state[step.field]||"").trim();
+  if(!val) return {valid:true};
+  if(step.latinOnly && !NAME_RE.test(val)){
+    return {valid:false, message:"Faqat lotin (ingliz) harflarida yozing"};
+  }
+  if(step.twoWords && val.split(/\s+/).filter(Boolean).length < 2){
+    return {valid:false, message:"Ism va familiyani to‘liq yozing"};
+  }
+  if(step.isUsername){
+    const uname = val.replace(/^@/, "");
+    if(!USERNAME_RE.test(uname)){
+      return {valid:false, message:"Username noto‘g‘ri (masalan: @Yuldashev_A23, 5-32 belgi)"};
+    }
+  }
+  return {valid:true};
+}
+
 const shell = document.getElementById("step_shell");
 const backBtn = document.getElementById("back_btn");
 const primaryBtn = document.getElementById("primary_btn");
-const progressFill = document.getElementById("progress_fill");
+const stepperBox = document.getElementById("stepper");
 const toast = document.getElementById("toast");
+const touched = new Set();
 
 function showToast(msg, kind){
   toast.textContent = msg;
   toast.className = "toast show" + (kind ? " " + kind : "");
-  setTimeout(()=>{ toast.className = "toast" + (kind ? " " + kind : ""); }, 2200);
+  setTimeout(()=>{ toast.className = "toast" + (kind ? " " + kind : ""); }, 2400);
 }
 
-function goTo(id){ currentId = id; render(); window.scrollTo(0,0); }
+function goToId(id){ currentId = id; render(); window.scrollTo(0,0); }
 function goNext(){
-  const vs = visibleSteps();
-  const i = vs.findIndex(s=>s.id===currentId);
-  if(i > -1 && i < vs.length - 1) goTo(vs[i+1].id);
+  const groups = visibleGroups();
+  const i = groups.findIndex(g=>g.includes(currentId));
+  if(i > -1 && i < groups.length - 1) goToId(groups[i+1][0]);
 }
 function goBack(){
-  const vs = visibleSteps();
-  const i = vs.findIndex(s=>s.id===currentId);
-  if(i > 0) goTo(vs[i-1].id);
+  const groups = visibleGroups();
+  const i = groups.findIndex(g=>g.includes(currentId));
+  if(i > 0) goToId(groups[i-1][0]);
 }
 
 function fireCheckpoint(step){
@@ -344,8 +415,9 @@ function renderUniList(filter){
       state.university = name;
       hapticSelect();
       closeUniSheet();
+      const singleton = visibleGroups().find(g=>g.includes("university")).length === 1;
       render();
-      setTimeout(goNext, 180);
+      if(singleton) setTimeout(goNext, 180);
     };
     uniList.appendChild(row);
   });
@@ -358,26 +430,50 @@ uniSearch.addEventListener("input", ()=>renderUniList(uniSearch.value));
 /* ---- Renderers ---- */
 function el(html){ const t=document.createElement("template"); t.innerHTML=html.trim(); return t.content.firstChild; }
 
+function updateFieldError(step){
+  const errEl = document.getElementById("err_"+step.id);
+  const inputEl = document.querySelector(`[data-field-id="${step.id}"]`);
+  if(!errEl) return;
+  if(!touched.has(step.id)){ errEl.textContent = ""; if(inputEl) inputEl.classList.remove("field-invalid"); return; }
+  const v = validateField(step);
+  errEl.textContent = v.valid ? "" : v.message;
+  if(inputEl) inputEl.classList.toggle("field-invalid", !v.valid);
+}
+
+function touchGroup(group){
+  group.forEach(id=>{ touched.add(id); updateFieldError(findStep(id)); });
+}
+
 function renderHeader(step){
   return `<p class="step-eyebrow">Bosqich</p><h2 class="step-title">${step.title}</h2><p class="step-hint">${step.hint||""}</p>`;
 }
 
-function renderText(step, card){
-  card.insertAdjacentHTML("beforeend", `<input type="text" id="field_input" placeholder="${step.placeholder||""}" autocomplete="off">`);
-  const input = card.querySelector("#field_input");
+function renderText(step, host, singleton){
+  const input = el(`<input type="text" data-field-id="${step.id}" placeholder="${step.placeholder||""}" autocomplete="off">`);
   input.value = state[step.field] || "";
-  input.addEventListener("input", ()=>{ state[step.field] = input.value; syncPrimary(); });
-  setTimeout(()=>input.focus({preventScroll:true}), 250);
+  input.addEventListener("input", ()=>{ state[step.field] = input.value; if(touched.has(step.id)) updateFieldError(step); syncPrimary(); });
+  input.addEventListener("blur", ()=>{
+    if(step.isUsername){
+      const v = input.value.trim();
+      if(v && !v.startsWith("@")){ input.value = "@"+v; state[step.field] = input.value; }
+    }
+    touched.add(step.id);
+    updateFieldError(step);
+  });
+  host.appendChild(input);
+  host.insertAdjacentHTML("beforeend", `<p class="field-error" id="err_${step.id}"></p>`);
+  if(singleton) setTimeout(()=>input.focus({preventScroll:true}), 250);
 }
 
-function renderTextarea(step, card){
-  card.insertAdjacentHTML("beforeend", `<textarea id="field_input" placeholder="${step.placeholder||""}"></textarea>`);
-  const input = card.querySelector("#field_input");
+function renderTextarea(step, host){
+  const input = el(`<textarea data-field-id="${step.id}" placeholder="${step.placeholder||""}"></textarea>`);
   input.value = state[step.field] || "";
   input.addEventListener("input", ()=>{ state[step.field] = input.value; syncPrimary(); });
+  host.appendChild(input);
+  host.insertAdjacentHTML("beforeend", `<p class="field-error" id="err_${step.id}"></p>`);
 }
 
-function renderChips(step, card){
+function renderChips(step, host, singleton){
   const box = el(`<div class="chip-group"></div>`);
   step.options.forEach(([value,label])=>{
     const chip = el(`<div class="chip${state[step.field]===value?" active":""}">${label}</div>`);
@@ -386,20 +482,20 @@ function renderChips(step, card){
       if(step.field === "performance"){ state.article_done=false; state.presentation_done=false; }
       hapticSelect();
       render();
-      setTimeout(goNext, 180);
+      if(singleton) setTimeout(goNext, 180);
     };
     box.appendChild(chip);
   });
-  card.appendChild(box);
+  host.appendChild(box);
 }
 
-function renderPicker(step, card){
+function renderPicker(step, host){
   const trigger = el(`<div class="select-trigger"><span class="val ${state.university?"":"placeholder"}">${state.university||"Tanlash uchun bosing"}</span><span class="chev">▾</span></div>`);
   trigger.onclick = openUniSheet;
-  card.appendChild(trigger);
+  host.appendChild(trigger);
 }
 
-function renderSection(step, card){
+function renderSection(step, host, singleton){
   const box = el(`<div class="tile-list"></div>`);
   Object.entries(SECTIONS).forEach(([id,val])=>{
     const tile = el(`<div class="tile${state.section_id===id?" active":""}"><span>${val[0]}</span><span class="check">✓</span></div>`);
@@ -407,16 +503,16 @@ function renderSection(step, card){
       if(state.section_id !== id){ state.section_id = id; state.section = val[0]; state.direction = ""; }
       hapticSelect();
       render();
-      setTimeout(goNext, 180);
+      if(singleton) setTimeout(goNext, 180);
     };
     box.appendChild(tile);
   });
-  card.appendChild(box);
+  host.appendChild(box);
 }
 
-function renderDirection(step, card){
+function renderDirection(step, host, singleton){
   if(!state.section_id){
-    card.insertAdjacentHTML("beforeend", `<p class="step-hint">Avval seksiyani tanlang.</p>`);
+    host.insertAdjacentHTML("beforeend", `<p class="field-block-hint">Avval seksiyani tanlang.</p>`);
     return;
   }
   const box = el(`<div class="tile-list"></div>`);
@@ -426,11 +522,11 @@ function renderDirection(step, card){
       state.direction = name;
       hapticSelect();
       render();
-      setTimeout(goNext, 180);
+      if(singleton) setTimeout(goNext, 180);
     };
     box.appendChild(tile);
   });
-  card.appendChild(box);
+  host.appendChild(box);
 }
 
 function renderCheckpoint(step, card){
@@ -463,69 +559,121 @@ function renderReview(step, card){
   const flagBox = el(`<div style="margin-top:10px"></div>`);
   flags.forEach(f=>{
     const row = el(`<div class="review-flag ${f.ok?"ok":"missing"}">${f.ok?"✅":"⚠️"} ${f.label}${f.ok?"":" — yuklanmagan, bosing"}</div>`);
-    if(!f.ok) row.onclick = ()=>goTo(f.step);
+    if(!f.ok) row.onclick = ()=>goToId(f.step);
     flagBox.appendChild(row);
   });
   card.appendChild(flagBox);
 }
 
+function renderStepBody(step, host, singleton){
+  if(step.kind==="text") renderText(step, host, singleton);
+  else if(step.kind==="textarea") renderTextarea(step, host);
+  else if(step.kind==="chips") renderChips(step, host, singleton);
+  else if(step.kind==="picker") renderPicker(step, host);
+  else if(step.kind==="section") renderSection(step, host, singleton);
+  else if(step.kind==="direction") renderDirection(step, host, singleton);
+  else if(step.kind==="checkpoint") renderCheckpoint(step, host);
+  else if(step.kind==="review") renderReview(step, host);
+}
+
+function groupValid(group){
+  return group.every(id => validateField(findStep(id)).valid);
+}
 function allComplete(){
-  return visibleSteps().every(s => s.id==="review" || isStepComplete(s));
+  return visibleGroups().every(g => g[0]==="review" || groupValid(g));
+}
+
+function renderStepper(groups, idx){
+  stepperBox.innerHTML = "";
+  groups.forEach((g,i)=>{
+    if(i>0) stepperBox.appendChild(el(`<div class="stepper-line${i<=idx?" done":""}"></div>`));
+    const done = i<idx, current = i===idx;
+    const dot = el(`<div class="stepper-dot${done?" done":""}${current?" current":""}">${done?"✓":(i+1)}</div>`);
+    if(done) dot.onclick = ()=>goToId(g[0]);
+    stepperBox.appendChild(dot);
+  });
+  const activeDot = stepperBox.children[idx*2];
+  if(activeDot && activeDot.scrollIntoView) activeDot.scrollIntoView({inline:"center", block:"nearest"});
 }
 
 function render(){
-  const vs = visibleSteps();
-  let step = findStep(currentId);
-  if(!step || !vs.includes(step)){ step = vs[0]; currentId = step.id; }
-  const idx = vs.findIndex(s=>s.id===currentId);
-  progressFill.style.width = Math.round(((idx+1)/vs.length)*100) + "%";
+  const groups = visibleGroups();
+  let idx = groups.findIndex(g => g.includes(currentId));
+  if(idx === -1){ idx = 0; currentId = groups[0][0]; }
+  const group = groups[idx];
+  const singleton = group.length === 1;
+
+  renderStepper(groups, idx);
 
   shell.innerHTML = "";
   const card = el(`<div class="card"></div>`);
-  card.insertAdjacentHTML("beforeend", renderHeader(step));
-  const bodyHost = card;
 
-  if(step.kind==="text") renderText(step, bodyHost);
-  else if(step.kind==="textarea") renderTextarea(step, bodyHost);
-  else if(step.kind==="chips") renderChips(step, bodyHost);
-  else if(step.kind==="picker") renderPicker(step, bodyHost);
-  else if(step.kind==="section") renderSection(step, bodyHost);
-  else if(step.kind==="direction") renderDirection(step, bodyHost);
-  else if(step.kind==="checkpoint") renderCheckpoint(step, bodyHost);
-  else if(step.kind==="review") renderReview(step, bodyHost);
-
+  if(singleton){
+    const step = findStep(group[0]);
+    card.insertAdjacentHTML("beforeend", renderHeader(step));
+    renderStepBody(step, card, true);
+  } else {
+    card.insertAdjacentHTML("beforeend", `<p class="step-eyebrow">Bosqich</p><h2 class="step-title">Ariza ma'lumotlari</h2><p class="step-hint">Quyidagi maydonlarni to‘ldiring</p>`);
+    const grid = el(`<div class="multi-grid"></div>`);
+    group.forEach(id=>{
+      const step = findStep(id);
+      const wide = step.kind==="section" || step.kind==="direction" || step.kind==="chips";
+      const block = el(`<div class="field-block${wide?" span2":""}"></div>`);
+      block.insertAdjacentHTML("beforeend", `<label class="field-label">${step.title}</label>`);
+      if(step.hint) block.insertAdjacentHTML("beforeend", `<p class="field-block-hint">${step.hint}</p>`);
+      renderStepBody(step, block, false);
+      grid.appendChild(block);
+    });
+    card.appendChild(grid);
+  }
   shell.appendChild(card);
 
   backBtn.style.visibility = idx===0 ? "hidden" : "visible";
   try{ if(idx===0) tg.BackButton.hide(); else tg.BackButton.show(); }catch(e){}
 
-  if(step.kind==="checkpoint"){
-    primaryBtn.textContent = state[step.doneFlag] ? "➡️ Keyingisi" : step.buttonLabel;
-    primaryBtn.disabled = false;
-    primaryBtn.onclick = ()=> state[step.doneFlag] ? goNext() : fireCheckpoint(step);
-  } else if(step.kind==="review"){
+  if(singleton && group[0]==="review"){
     const ready = allComplete();
     primaryBtn.textContent = "✅ Yuborish";
     primaryBtn.disabled = !ready;
     primaryBtn.onclick = sendFinal;
-  } else if(step.kind==="section" || step.kind==="direction" || step.kind==="chips" || step.kind==="picker"){
-    primaryBtn.textContent = "Davom etish ➡️";
-    primaryBtn.disabled = !isStepComplete(step);
-    primaryBtn.onclick = goNext;
-  } else {
-    primaryBtn.textContent = "Davom etish ➡️";
-    primaryBtn.onclick = ()=>{
-      if(!isStepComplete(step)){ showToast("Iltimos, maydonni to‘ldiring"); hapticNotify("error"); return; }
-      goNext();
-    };
-    syncPrimary();
+    return;
   }
+  const soloStep = singleton ? findStep(group[0]) : null;
+  if(soloStep && soloStep.kind==="checkpoint"){
+    primaryBtn.textContent = state[soloStep.doneFlag] ? "➡️ Keyingisi" : soloStep.buttonLabel;
+    primaryBtn.disabled = false;
+    primaryBtn.onclick = ()=> state[soloStep.doneFlag] ? goNext() : fireCheckpoint(soloStep);
+    return;
+  }
+  if(soloStep && ["section","direction","chips","picker"].includes(soloStep.kind)){
+    primaryBtn.textContent = "Davom etish ➡️";
+    primaryBtn.disabled = !isStepComplete(soloStep);
+    primaryBtn.onclick = goNext;
+    return;
+  }
+  primaryBtn.textContent = "Davom etish ➡️";
+  primaryBtn.onclick = ()=>{
+    touchGroup(group);
+    if(!groupValid(group)){
+      const bad = group.map(findStep).find(s=>!validateField(s).valid);
+      hapticNotify("error");
+      showToast(validateField(bad).message || "Maydonlarni to‘g‘ri to‘ldiring");
+      return;
+    }
+    goNext();
+  };
+  syncPrimary(group);
 }
 
-function syncPrimary(){
-  const step = findStep(currentId);
-  if(!step || (step.kind!=="text" && step.kind!=="textarea")) return;
-  primaryBtn.disabled = !isStepComplete(step);
+function syncPrimary(group){
+  const g = group || visibleGroups().find(gr=>gr.includes(currentId));
+  if(!g) return;
+  const anySoloSpecial = g.length===1 && ["checkpoint","review","section","direction","chips","picker"].includes(findStep(g[0]).kind);
+  if(anySoloSpecial) return;
+  primaryBtn.disabled = !g.every(id=>{
+    const step = findStep(id);
+    return step.optional || isStepComplete(step);
+  });
 }
 
 backBtn.onclick = goBack;
