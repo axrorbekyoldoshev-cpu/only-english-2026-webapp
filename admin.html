@@ -174,6 +174,18 @@ function buildBody(app, body){
   filesBtn.onclick = (e)=>{ e.stopPropagation(); send("view_files", {application_id: app.id}); };
   body.appendChild(filesBtn);
 
+  if(app.drive_url){
+    const driveBtn = document.createElement("button");
+    driveBtn.type = "button";
+    driveBtn.className = "ghost-btn";
+    driveBtn.textContent = "🗂 Google Drive papkasini ochish";
+    driveBtn.onclick = (e)=>{
+      e.stopPropagation();
+      try{ tg.openLink(app.drive_url); }catch(err){ window.open(app.drive_url, "_blank"); }
+    };
+    body.appendChild(driveBtn);
+  }
+
   const actions = document.createElement("div");
   actions.className = "app-actions";
   const approveBtn = document.createElement("button");
