@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="uz"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Only English 2025</title><script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{--accent:var(--tg-theme-button-color,#2481cc);--bg:var(--tg-theme-bg-color,#fff);--text:var(--tg-theme-text-color,#111);--hint:var(--tg-theme-hint-color,#68707a)}*{box-sizing:border-box}body{margin:0;padding:20px 16px 32px;font:16px system-ui,sans-serif;background:var(--bg);color:var(--text)}h1{font-size:22px;margin:0 0 6px}p{color:var(--hint);line-height:1.4}label{display:block;font-weight:650;margin:18px 0 7px}input,select,textarea{width:100%;padding:12px;border:1px solid #aab1ba;border-radius:10px;background:transparent;color:var(--text);font:inherit}textarea{min-height:74px}button{width:100%;margin-top:24px;padding:14px;border:0;border-radius:10px;background:var(--accent);color:var(--tg-theme-button-text-color,#fff);font-weight:700;font-size:16px}.error{color:#d23d3d;min-height:20px;margin-top:12px}
+</style></head><body>
+<h1>Only English 2025</h1><p>10 seksiyadan faqat bittasi va uning ichidan bitta yo‘nalish tanlanadi.</p>
+<form id="form">
+<label>Ism-familiya (ingliz tilida)<input id="full_name" required></label>
+<label>Status<select id="role" required><option value="">Tanlang</option><option>Student</option><option>Master</option><option>Doctoral student</option><option>Applicant</option></select></label>
+<label>Ilmiy rahbar (ingliz tilida)<input id="supervisor" required></label>
+<label>Ilmiy rahbar lavozimi (ingliz tilida)<input id="head_position" required></label>
+<label>Universitet / tashkilot<select id="university" required></select></label>
+<label>Seksiya<select id="section_id" required></select></label>
+<label>Yo‘nalish<select id="direction" required disabled></select></label>
+<label>Qatnashish turi<select id="performance" required><option value="">Tanlang</option><option>Publication only</option><option>Presentation only</option><option>Presentation and publication</option></select></label>
+<label>Telegram akkaunt<input id="telegram_account" placeholder="@Yuldashev_A23" required></label>
+<label>Taklif/savollar (ixtiyoriy)<textarea id="suggestions"></textarea></label>
+<div class="error" id="error"></div><button type="submit">Davom etish</button></form>
+<script>
+const tg=window.Telegram.WebApp;tg.ready();tg.expand();
+const S={
+1:['I Section: THERAPY',['Internal diseases','Faculty and hospital therapy','Internal medicine propaedeutic','Pharmacology','Endocrinology']],
+2:['II Section: SURGERY',['General surgery','Faculty and hospital surgery','Anesthesiology and resuscitation','Ophthalmology','Otorhinolaryngology, dentistry and maxillo-facial surgery','Traumatology and Orthopedics']],
+3:['III Section: OBSTETRICS AND GYNECOLOGY',['Obstetrics and gynecology']],4:['IV Section: PEDIATRICS',['Pediatrics','Propaedeutics of Childhood Diseases','Neonatology']],
+5:['V Section: DENTISTRY',['Hospital Therapeutic Dentistry','Faculty Therapeutic Dentistry','Propaedeutics of Orthopedic Dentistry']],6:['VI Section: Medical prevention',['Environmental hygiene','Communal and labor hygiene','Epidemiology','Children, adolescents and food hygiene','Microbiology and virology']],
+7:['VII Section: MANAGEMENT AND MODERN MEDICAL TECHNOLOGIES',['Biophysics and Biomedical Engineering','Informatics, Mathematics and Statistics in Medicine','Medical Radiology','Healthcare Organization and Management','School of Public Health']],
+8:['VIII Section: CLINICAL SPECIALTIES',['Rehabilitation and Traditional Medicine','Infectious Diseases','Dermatovenerology','Hematology and Transfusiology','Allergology']],9:['IX Section: NEUROLOGY',['Neurology','Psychiatry and Medical Psychology','Psychotherapy','Medical Genetics']],
+10:['X Section: FUNDAMENTAL SCIENCES',['Normal and Pathological Physiology','Human Anatomy and Basics of Surgical Techniques (OXTA)','Pathological Anatomy','Forensic Medicine and Medical Law','Histology and Medical Biology','Medical and Biological Chemistry']]};
+const U=['Tashkent State Medical University','Tashkent State Medical University Chirchik B','Tashkent State Medical University Termiz B','Urganch Medical Institute','Bukhoro State Medical Institute','Samarkand State Medical University','Tashkent Pharmaceutical Institute','Central Asian Medical University','Andijan State Medical Institute','EMU University','Fergana Medical Institute of Public Health','Military Medical Academy of the Armed Forces of the Republic of Uzbekistan','Karakalpakstan Medical Institute','Other'];
+const add=(el,v,t)=>el.add(new Option(t,v)),u=document.querySelector('#university'),s=document.querySelector('#section_id'),d=document.querySelector('#direction');add(u,'','Tanlang');U.forEach(x=>add(u,x,x));add(s,'','Tanlang');Object.entries(S).forEach(([id,x])=>add(s,id,x[0]));s.onchange=()=>{d.length=0;add(d,'','Tanlang');d.disabled=!S[s.value];if(S[s.value])S[s.value][1].forEach(x=>add(d,x,x))};
+document.querySelector('#form').onsubmit=e=>{e.preventDefault();const x={};['full_name','role','supervisor','head_position','university','section_id','direction','performance','telegram_account','suggestions'].forEach(k=>x[k]=document.querySelector('#'+k).value.trim());if(Object.entries(x).filter(([k])=>k!=='suggestions').some(([,v])=>!v)){document.querySelector('#error').textContent='Barcha majburiy maydonlarni to‘ldiring.';return}tg.sendData(JSON.stringify(x));tg.close()};
+</script></body></html>
