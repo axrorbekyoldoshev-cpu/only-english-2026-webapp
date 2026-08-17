@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Admin panel — Only English 2026</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --fb-bg:#f1f3f6;--fb-card:#ffffff;--fb-text:#12161c;--fb-hint:#6b7684;
+  --fb-accent:#2481cc;--fb-accent-text:#ffffff;--fb-border:rgba(15,20,25,.12);--fb-danger:#e5484d;--fb-good:#2fae5c;--fb-warn:#c98a1a;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --fb-bg:#0f1216;--fb-card:#1a1f26;--fb-text:#eef1f5;--fb-hint:#8a94a1;
+    --fb-accent:#4da3e0;--fb-accent-text:#0b0f13;--fb-border:rgba(255,255,255,.12);--fb-danger:#ff6b6f;--fb-good:#3ecb75;--fb-warn:#e0a83c;
+  }
+}
+:root{
+  --bg:var(--tg-theme-bg-color,var(--fb-bg));
+  --card:var(--tg-theme-secondary-bg-color,var(--fb-card));
+  --text:var(--tg-theme-text-color,var(--fb-text));
+  --hint:var(--tg-theme-hint-color,var(--fb-hint));
+  --accent:var(--tg-theme-button-color,var(--fb-accent));
+  --accent-text:var(--tg-theme-button-text-color,var(--fb-accent-text));
+  --border:var(--fb-border);--danger:var(--fb-danger);--good:var(--fb-good);--warn:var(--fb-warn);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding-bottom:96px}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);padding:calc(env(safe-area-inset-top) + 14px) 16px 12px;box-shadow:0 1px 0 var(--border)}
+.topbar-inner{max-width:640px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.topbar h1{font-size:17px;margin:0}
+.topbar .count{color:var(--hint);font-size:12.5px;margin-top:2px}
+
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;margin-top:12px;overflow:hidden}
+.hint-card{padding:18px;color:var(--hint);font-size:13.5px;text-align:center}
+
+.app-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;cursor:pointer}
+.app-name{font-weight:800;font-size:14.5px}
+.app-sub{color:var(--hint);font-size:12.5px;margin-top:2px}
+.chev{color:var(--hint);flex:none;transition:transform .15s}
+.chev.open{transform:rotate(180deg)}
+
+.app-body{padding:0 16px 16px}
+.detail-row{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--border);font-size:13px}
+.detail-row .k{color:var(--hint);flex:none}
+.detail-row .v{text-align:right;font-weight:600}
+
+.ghost-btn{width:100%;margin-top:12px;padding:11px;border-radius:11px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-weight:700;font-size:13px;cursor:pointer}
+
+.app-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.act-btn{flex:1 1 auto;min-width:120px;padding:11px 10px;border-radius:11px;border:0;font-weight:800;font-size:13px;cursor:pointer;color:#fff}
+.act-btn.approve{background:var(--good)}
+.act-btn.reject{background:var(--danger)}
+.act-btn.revise{background:var(--warn)}
+.act-btn:active{transform:scale(.98)}
+
+.note-wrap{margin-top:12px;display:none}
+.note-input{width:100%;min-height:80px;padding:12px 13px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font:inherit;resize:vertical}
+.note-input:focus{outline:none;border-color:var(--accent)}
+.confirm-note{width:100%;margin-top:8px;padding:12px;border:0;border-radius:11px;background:var(--accent);color:var(--accent-text);font-weight:800;font-size:13.5px;cursor:pointer}
+
+.navbar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(180deg,transparent,var(--bg) 30%);z-index:15}
+.navbar-inner{max-width:640px;margin:0 auto;display:flex;align-items:center;gap:10px}
+.page-btn{flex:1;padding:13px;border:0;border-radius:12px;background:var(--card);border:1.5px solid var(--border);color:var(--text);font-weight:700;font-size:13.5px;cursor:pointer}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+.page-info{flex:none;color:var(--hint);font-size:12px;min-width:78px;text-align:center}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div>
+      <h1>🔐 Kutilayotgan arizalar</h1>
+      <p class="count" id="count">—</p>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="list"></div>
+</div>
+
+<div class="navbar">
+  <div class="navbar-inner">
+    <button class="page-btn" id="prev_btn" type="button">◀ Oldingi</button>
+    <span class="page-info" id="page_info"></span>
+    <button class="page-btn" id="next_btn" type="button">Keyingi ▶</button>
+  </div>
+</div>
+
+<script>
+const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : {
+  ready(){}, expand(){}, close(){}, sendData(){}, setHeaderColor(){},
+  HapticFeedback:{ impactOccurred(){}, notificationOccurred(){}, selectionChanged(){} },
+  MainButton:{ hide(){} },
+};
+tg.ready();
+tg.expand();
+try{ tg.setHeaderColor && tg.setHeaderColor('secondary_bg_color'); }catch(e){}
+try{ tg.MainButton && tg.MainButton.hide(); }catch(e){}
+
+function hapticSelect(){ try{ tg.HapticFeedback.selectionChanged(); }catch(e){} }
+function hapticNotify(kind){ try{ tg.HapticFeedback.notificationOccurred(kind); }catch(e){} }
+
+function b64urlDecode(s){
+  s = s.replace(/-/g,"+").replace(/_/g,"/");
+  while(s.length % 4) s += "=";
+  try{ return decodeURIComponent(escape(atob(s))); }catch(e){ return null; }
+}
+
+function escapeHtml(s){
+  return (s==null?"":String(s)).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+}
+
+const params = new URLSearchParams(location.search);
+let snapshot = null;
+const raw = params.get("data");
+if(raw){
+  const decoded = b64urlDecode(raw);
+  if(decoded){
+    try{ snapshot = JSON.parse(decoded); }catch(e){ snapshot = null; }
+  }
+}
+
+const listEl = document.getElementById("list");
+const countEl = document.getElementById("count");
+const pageInfoEl = document.getElementById("page_info");
+const prevBtn = document.getElementById("prev_btn");
+const nextBtn = document.getElementById("next_btn");
+
+function send(action, extra){
+  const payload = Object.assign({
+    action,
+    offset: snapshot ? snapshot.offset : 0,
+    page_size: snapshot ? snapshot.page_size : 8,
+  }, extra || {});
+  tg.sendData(JSON.stringify(payload));
+  tg.close();
+}
+
+function renderMessage(msg){
+  listEl.innerHTML = "";
+  const card = document.createElement("div");
+  card.className = "card";
+  card.innerHTML = `<div class="hint-card">${escapeHtml(msg)}</div>`;
+  listEl.appendChild(card);
+}
+
+function buildBody(app, body){
+  const rows = [
+    ["Status", app.role], ["Telefon", app.phone], ["Ilmiy rahbar", app.supervisor],
+    ["Rahbar lavozimi", app.head_position], ["Qatnashish turi", app.performance],
+    ["Ma'ruza mavzusi", app.report_title], ["Telegram akkaunt", app.telegram_account],
+    ["Taklif/savollar", app.suggestions], ["Yuborilgan vaqt", app.created_at],
+  ];
+  const details = document.createElement("div");
+  rows.forEach(([k, v])=>{
+    if(!v) return;
+    const row = document.createElement("div");
+    row.className = "detail-row";
+    row.innerHTML = `<span class="k">${escapeHtml(k)}</span><span class="v">${escapeHtml(v)}</span>`;
+    details.appendChild(row);
+  });
+  body.appendChild(details);
+
+  const filesBtn = document.createElement("button");
+  filesBtn.type = "button";
+  filesBtn.className = "ghost-btn";
+  filesBtn.textContent = "📎 Fayllarni botda ko‘rish";
+  filesBtn.onclick = (e)=>{ e.stopPropagation(); send("view_files", {application_id: app.id}); };
+  body.appendChild(filesBtn);
+
+  const actions = document.createElement("div");
+  actions.className = "app-actions";
+  const approveBtn = document.createElement("button");
+  approveBtn.type = "button"; approveBtn.className = "act-btn approve"; approveBtn.textContent = "✅ Qabul qilish";
+  const rejectBtn = document.createElement("button");
+  rejectBtn.type = "button"; rejectBtn.className = "act-btn reject"; rejectBtn.textContent = "❌ Rad etish";
+  const reviseBtn = document.createElement("button");
+  reviseBtn.type = "button"; reviseBtn.className = "act-btn revise"; reviseBtn.textContent = "✏️ Tuzatishga qaytarish";
+  actions.appendChild(approveBtn); actions.appendChild(rejectBtn); actions.appendChild(reviseBtn);
+  body.appendChild(actions);
+
+  const noteWrap = document.createElement("div");
+  noteWrap.className = "note-wrap";
+  noteWrap.innerHTML = `<textarea class="note-input" placeholder="Izoh yozing..."></textarea><button type="button" class="confirm-note">Yuborish</button>`;
+  body.appendChild(noteWrap);
+  const noteInput = noteWrap.querySelector(".note-input");
+  const confirmBtn = noteWrap.querySelector(".confirm-note");
+  let pendingAction = null;
+
+  approveBtn.onclick = (e)=>{ e.stopPropagation(); hapticNotify("success"); send("approve", {application_id: app.id}); };
+  rejectBtn.onclick = (e)=>{
+    e.stopPropagation();
+    pendingAction = "reject";
+    confirmBtn.textContent = "❌ Rad etib, yuborish";
+    noteWrap.style.display = "block";
+    noteInput.focus();
+  };
+  reviseBtn.onclick = (e)=>{
+    e.stopPropagation();
+    pendingAction = "revise";
+    confirmBtn.textContent = "✏️ Tuzatishga qaytarib, yuborish";
+    noteWrap.style.display = "block";
+    noteInput.focus();
+  };
+  confirmBtn.onclick = (e)=>{
+    e.stopPropagation();
+    const note = noteInput.value.trim();
+    if(!note){ hapticNotify("error"); noteInput.focus(); return; }
+    send(pendingAction, {application_id: app.id, note});
+  };
+}
+
+function renderList(){
+  if(!snapshot){
+    countEl.textContent = "";
+    pageInfoEl.textContent = "";
+    prevBtn.disabled = true; nextBtn.disabled = true;
+    renderMessage("Ma'lumot topilmadi. Botdagi “Admin panel” tugmasidan qaytadan oching.");
+    return;
+  }
+  countEl.textContent = snapshot.total + " ta kutilmoqda";
+  if(snapshot.total){
+    const from = snapshot.offset + 1;
+    const to = Math.min(snapshot.offset + snapshot.apps.length, snapshot.total);
+    pageInfoEl.textContent = `${from}–${to} / ${snapshot.total}`;
+  } else {
+    pageInfoEl.textContent = "";
+  }
+  prevBtn.disabled = snapshot.offset <= 0;
+  nextBtn.disabled = snapshot.offset + snapshot.page_size >= snapshot.total;
+
+  listEl.innerHTML = "";
+  if(!snapshot.apps.length){
+    renderMessage("Kutilayotgan arizalar yo‘q.");
+    return;
+  }
+  snapshot.apps.forEach(app=>{
+    const card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML = `
+      <div class="app-head">
+        <div>
+          <div class="app-name">#${app.id} — ${escapeHtml(app.full_name)}</div>
+          <div class="app-sub">${escapeHtml(app.university)}</div>
+          <div class="app-sub">${escapeHtml(app.section)} — ${escapeHtml(app.direction)}</div>
+        </div>
+        <div class="chev">▾</div>
+      </div>
+    `;
+    const head = card.querySelector(".app-head");
+    const chev = card.querySelector(".chev");
+    let body = null;
+    head.onclick = ()=>{
+      hapticSelect();
+      if(body){
+        const open = body.style.display !== "none";
+        body.style.display = open ? "none" : "block";
+        chev.classList.toggle("open", !open);
+        return;
+      }
+      body = document.createElement("div");
+      body.className = "app-body";
+      card.appendChild(body);
+      buildBody(app, body);
+      chev.classList.add("open");
+    };
+    listEl.appendChild(card);
+  });
+}
+
+prevBtn.onclick = ()=>{ if(!prevBtn.disabled) send("prev_page"); };
+nextBtn.onclick = ()=>{ if(!nextBtn.disabled) send("next_page"); };
+
+renderList();
+</script>
+</body>
+</html>
