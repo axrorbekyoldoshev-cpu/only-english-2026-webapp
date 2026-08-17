@@ -198,7 +198,10 @@ tg.ready();
 tg.expand();
 try{ tg.setHeaderColor && tg.setHeaderColor('secondary_bg_color'); }catch(e){}
 try{ tg.MainButton && tg.MainButton.hide(); }catch(e){}
-const inTelegram = !!tg.initData;
+/* initData can legitimately be empty on some Telegram clients even inside a
+   real Mini App session, so detect "are we in Telegram" from the SDK object
+   itself (tgReady) rather than from initData's content. */
+const inTelegram = tgReady;
 
 const DESKTOP_PLATFORMS = ["tdesktop", "macos", "web", "weba", "webk", "windows", "linux"];
 
