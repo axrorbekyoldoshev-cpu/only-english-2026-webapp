@@ -177,6 +177,16 @@ try{ tg.setHeaderColor && tg.setHeaderColor('secondary_bg_color'); }catch(e){}
 try{ tg.MainButton && tg.MainButton.hide(); }catch(e){}
 const inTelegram = !!tg.initData;
 
+/* Desktop clients open Mini Apps in a small, resizable window by default.
+   Lock those to a fixed full-screen window; phones already open effectively
+   full-screen via expand(), so leave their native behavior untouched. */
+try{
+  const DESKTOP_PLATFORMS = ["tdesktop", "macos", "web", "weba", "webk", "windows", "linux"];
+  if(typeof tg.requestFullscreen === "function" && DESKTOP_PLATFORMS.includes(tg.platform)){
+    tg.requestFullscreen();
+  }
+}catch(e){}
+
 function haptic(kind){ try{ tg.HapticFeedback.impactOccurred(kind||"light"); }catch(e){} }
 function hapticSelect(){ try{ tg.HapticFeedback.selectionChanged(); }catch(e){} }
 function hapticNotify(kind){ try{ tg.HapticFeedback.notificationOccurred(kind); }catch(e){} }
