@@ -247,7 +247,7 @@ const PERFORMANCES = [["Publication only","Faqat maqola"],["Presentation only","
 const state = {
   full_name:"", role:"", supervisor:"", head_position:"", university:"", section_id:"", section:"",
   direction:"", performance:"", report_title:"", telegram_account:"", suggestions:"",
-  passport_done:false, phone_done:false, article_done:false, antiplag_done:false, presentation_done:false,
+  phone_done:false, article_done:false, antiplag_done:false, presentation_done:false,
 };
 
 function needsArticle(s){ return s.performance === "Publication only" || s.performance === "Presentation and publication"; }
@@ -258,7 +258,6 @@ const USERNAME_RE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;
 
 const STEP_DEFS = [
   {id:"full_name", kind:"text", field:"full_name", title:"Ism-familiya", hint:"Ism-familiyani ingliz tilida yozing", placeholder:"Masalan: Aziz Yuldashev", latinOnly:true, twoWords:true},
-  {id:"passport", kind:"checkpoint", checkpoint:"passport", doneFlag:"passport_done", icon:"🪪", title:"Pasport", desc:"Pasport yoki ID karta nusxasini (PDF, JPG yoki PNG) botga yuborasiz. Fayl qabul qilingach, forma aynan shu yerdan davom etadi.", buttonLabel:"📎 Pasportni yuklash"},
   {id:"role", kind:"chips", field:"role", options:ROLES, title:"Status", hint:"Statusingizni tanlang"},
   {id:"phone", kind:"checkpoint", checkpoint:"phone", doneFlag:"phone_done", icon:"📱", title:"Telefon raqam", desc:"Telegram akkauntingizga tegishli telefon raqamni ulashasiz. Bot faqat shu akkauntga tegishli raqamni qabul qiladi.", buttonLabel:"📱 Raqamni yuborish"},
   {id:"supervisor", kind:"text", field:"supervisor", title:"Ilmiy rahbar", hint:"Ism-familiyani ingliz tilida yozing", placeholder:"Rahbaringiz ism-familiyasi", latinOnly:true, twoWords:true},
@@ -278,7 +277,7 @@ const STEP_DEFS = [
 /* Desktop merges consecutive plain-field steps onto one screen; phones get
    each of those exploded back into their own single-question screen. */
 const GROUP_TEMPLATE = [
-  ["full_name"], ["passport"], ["role"], ["phone"],
+  ["full_name"], ["role"], ["phone"],
   ["supervisor","head_position","university","section","direction","performance"],
   ["files"], ["report_title"], ["presentation"],
   ["telegram_account","suggestions"], ["review"],
@@ -562,7 +561,6 @@ function renderReview(step, card){
   card.appendChild(box);
 
   const flags = [
-    {label:"Pasport", ok: state.passport_done, step:"passport"},
     {label:"Telefon raqam", ok: state.phone_done, step:"phone"},
   ];
   if(needsArticle(state)) flags.push({label:"Maqola va antiplagiat", ok: state.article_done, step:"files"});
