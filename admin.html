@@ -70,6 +70,7 @@ body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMa
 .status-pill{padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:700}
 .status-pill.rejected{background:color-mix(in srgb,var(--danger) 16%,var(--bg));color:var(--danger)}
 .status-pill.revision_requested{background:color-mix(in srgb,var(--warn) 16%,var(--bg));color:var(--warn)}
+.status-pill.approved{background:color-mix(in srgb,var(--good) 16%,var(--bg));color:var(--good)}
 
 .act-btn.restore{background:var(--accent);width:100%;margin-top:14px}
 
@@ -115,6 +116,7 @@ body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMa
 <div class="wrap">
   <div class="seg" id="seg">
     <button type="button" class="seg-btn active" data-mode="pending">📋 Kutilmoqda</button>
+    <button type="button" class="seg-btn" data-mode="approved">✅ Qabul qilingan</button>
     <button type="button" class="seg-btn" data-mode="rejected">↩️ Rad etilgan</button>
   </div>
   <div id="list"></div>
@@ -177,11 +179,13 @@ if(raw){
   }
 }
 const pageSize = (data && data.page_size) || 8;
-let currentMode = (data && (data.mode === "rejected" ? "rejected" : "pending")) || "pending";
+const VALID_MODES = ["pending", "approved", "rejected"];
+let currentMode = (data && VALID_MODES.includes(data.mode)) ? data.mode : "pending";
 let currentOffset = 0;
 
 function currentTab(){
-  return data ? (currentMode === "rejected" ? data.rejected : data.pending) : null;
+  if(!data) return null;
+  return data[currentMode] || null;
 }
 
 const listEl = document.getElementById("list");
@@ -218,15 +222,17 @@ function renderMessage(msg){
   listEl.appendChild(card);
 }
 
-const STATUS_LABELS = {rejected: "❌ Rad etildi", revision_requested: "✏️ Tuzatishga qaytarildi"};
+const STATUS_LABELS = {rejected: "❌ Rad etildi", revision_requested: "✏️ Tuzatishga qaytarildi", approved: "✅ Qabul qilindi"};
 
-function buildBody(app, body, isRejected){
+function buildBody(app, body, mode){
+  const isRejected = mode === "rejected";
+  const isApproved = mode === "approved";
   const pillRow = document.createElement("div");
   pillRow.className = "pill-row";
   [app.role, app.performance].filter(Boolean).forEach(text=>{
     pillRow.appendChild(el(`<span class="pill">${escapeHtml(text)}</span>`));
   });
-  if(isRejected && STATUS_LABELS[app.status]){
+  if((isRejected || isApproved) && STATUS_LABELS[app.status]){
     pillRow.appendChild(el(`<span class="status-pill ${app.status}">${STATUS_LABELS[app.status]}</span>`));
   }
   body.appendChild(pillRow);
@@ -256,6 +262,9 @@ function buildBody(app, body, isRejected){
     };
     body.appendChild(driveBtn);
   }
+
+  // Approved applications are final — nothing left to act on here.
+  if(isApproved) return;
 
   const zone = el(`<div></div>`);
 
@@ -354,6 +363,12 @@ function buildBody(app, body, isRejected){
 
 function el(html){ const t=document.createElement("template"); t.innerHTML=html.trim(); return t.content.firstChild; }
 
+const MODE_META = {
+  pending: {title:"Kutilayotgan arizalar", countSuffix:" ta kutilmoqda", empty:"Kutilayotgan arizalar yo‘q. 🎉"},
+  approved: {title:"Qabul qilingan arizalar", countSuffix:" ta qabul qilingan", empty:"Qabul qilingan arizalar yo‘q."},
+  rejected: {title:"Rad etilgan arizalar", countSuffix:" ta rad etilgan", empty:"Rad etilgan arizalar yo‘q."},
+};
+
 function renderList(){
   segEl.querySelectorAll(".seg-btn").forEach(btn=>{
     btn.classList.toggle("active", currentMode === btn.dataset.mode);
@@ -367,14 +382,14 @@ function renderList(){
     renderMessage("Ma'lumot topilmadi. Botdagi “Admin panel” tugmasidan qaytadan oching.");
     return;
   }
-  const isRejected = currentMode === "rejected";
+  const meta = MODE_META[currentMode];
   const allApps = tab.apps || [];
   const total = tab.total || 0;
   if(currentOffset >= allApps.length) currentOffset = Math.max(0, allApps.length - pageSize);
   const pageApps = allApps.slice(currentOffset, currentOffset + pageSize);
 
-  titleEl.textContent = isRejected ? "Rad etilgan arizalar" : "Kutilayotgan arizalar";
-  countEl.textContent = total + (isRejected ? " ta rad etilgan" : " ta kutilmoqda");
+  titleEl.textContent = meta.title;
+  countEl.textContent = total + meta.countSuffix;
   if(allApps.length){
     const from = currentOffset + 1;
     const to = Math.min(currentOffset + pageApps.length, allApps.length);
@@ -387,7 +402,7 @@ function renderList(){
 
   listEl.innerHTML = "";
   if(!pageApps.length){
-    renderMessage(isRejected ? "Rad etilgan arizalar yo‘q." : "Kutilayotgan arizalar yo‘q. 🎉");
+    renderMessage(meta.empty);
     return;
   }
   pageApps.forEach((app, i)=>{
@@ -417,7 +432,7 @@ function renderList(){
       }
       body = el(`<div class="app-body"></div>`);
       card.appendChild(body);
-      buildBody(app, body, isRejected);
+      buildBody(app, body, currentMode);
       chev.classList.add("open");
     };
     listEl.appendChild(card);
