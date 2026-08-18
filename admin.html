@@ -63,6 +63,16 @@ body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMa
 .ghost-btn{width:100%;margin-top:10px;padding:11px;border-radius:11px;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-weight:700;font-size:13px;cursor:pointer}
 .ghost-btn:active{transform:scale(.98)}
 
+.seg{display:flex;gap:4px;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:4px;margin-top:12px}
+.seg-btn{flex:1;padding:10px 6px;border:0;border-radius:10px;background:transparent;color:var(--hint);font-weight:700;font-size:12.5px;cursor:pointer;transition:.15s}
+.seg-btn.active{background:var(--accent);color:var(--accent-text)}
+
+.status-pill{padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:700}
+.status-pill.rejected{background:color-mix(in srgb,var(--danger) 16%,var(--bg));color:var(--danger)}
+.status-pill.revision_requested{background:color-mix(in srgb,var(--warn) 16%,var(--bg));color:var(--warn)}
+
+.act-btn.restore{background:var(--accent);width:100%;margin-top:14px}
+
 .app-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
 .act-btn{flex:1 1 auto;min-width:104px;padding:12px 10px;border-radius:11px;border:0;font-weight:800;font-size:13px;cursor:pointer;color:#fff;transition:transform .1s,opacity .15s}
 .act-btn.approve{background:var(--good)}
@@ -96,13 +106,17 @@ body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMa
   <div class="topbar-inner">
     <div class="topbar-icon">🔐</div>
     <div>
-      <h1>Kutilayotgan arizalar</h1>
+      <h1 id="title">Kutilayotgan arizalar</h1>
       <p class="count" id="count">—</p>
     </div>
   </div>
 </div>
 
 <div class="wrap">
+  <div class="seg" id="seg">
+    <button type="button" class="seg-btn active" data-mode="pending">📋 Kutilmoqda</button>
+    <button type="button" class="seg-btn" data-mode="rejected">↩️ Rad etilgan</button>
+  </div>
   <div id="list"></div>
 </div>
 
@@ -161,10 +175,12 @@ if(raw){
 }
 
 const listEl = document.getElementById("list");
+const titleEl = document.getElementById("title");
 const countEl = document.getElementById("count");
 const pageInfoEl = document.getElementById("page_info");
 const prevBtn = document.getElementById("prev_btn");
 const nextBtn = document.getElementById("next_btn");
+const segEl = document.getElementById("seg");
 
 function send(action, extra, sourceEl){
   if(sourceEl) sourceEl.classList.add("sending");
@@ -172,10 +188,20 @@ function send(action, extra, sourceEl){
     action,
     offset: snapshot ? snapshot.offset : 0,
     page_size: snapshot ? snapshot.page_size : 8,
+    mode: snapshot ? snapshot.mode : "pending",
   }, extra || {});
   tg.sendData(JSON.stringify(payload));
   tg.close();
 }
+
+segEl.querySelectorAll(".seg-btn").forEach(btn=>{
+  btn.onclick = ()=>{
+    const target = btn.dataset.mode;
+    if(snapshot && snapshot.mode === target) return;
+    hapticImpact("light");
+    send("switch_view", {target_mode: target});
+  };
+});
 
 function renderMessage(msg){
   listEl.innerHTML = "";
@@ -185,12 +211,17 @@ function renderMessage(msg){
   listEl.appendChild(card);
 }
 
-function buildBody(app, body){
+const STATUS_LABELS = {rejected: "❌ Rad etildi", revision_requested: "✏️ Tuzatishga qaytarildi"};
+
+function buildBody(app, body, isRejected){
   const pillRow = document.createElement("div");
   pillRow.className = "pill-row";
   [app.role, app.performance].filter(Boolean).forEach(text=>{
     pillRow.appendChild(el(`<span class="pill">${escapeHtml(text)}</span>`));
   });
+  if(isRejected && STATUS_LABELS[app.status]){
+    pillRow.appendChild(el(`<span class="status-pill ${app.status}">${STATUS_LABELS[app.status]}</span>`));
+  }
   body.appendChild(pillRow);
 
   const rows = [
@@ -199,6 +230,7 @@ function buildBody(app, body){
     ["Telegram akkaunt", app.telegram_account], ["Taklif/savollar", app.suggestions],
     ["Yuborilgan vaqt", app.created_at],
   ];
+  if(isRejected) rows.push(["Komissiya izohi", app.admin_note]);
   rows.forEach(([k, v])=>{
     if(!v) return;
     body.appendChild(el(`<div class="detail-row"><span class="k">${escapeHtml(k)}</span><span class="v">${escapeHtml(v)}</span></div>`));
@@ -218,14 +250,44 @@ function buildBody(app, body){
     body.appendChild(driveBtn);
   }
 
+  const zone = el(`<div></div>`);
+
+  if(isRejected){
+    const restoreBtn = el(`<button type="button" class="act-btn restore">↩️ Qayta yuborishga ruxsat berish</button>`);
+    body.appendChild(restoreBtn);
+    body.appendChild(zone);
+    function clearZone(){ zone.innerHTML = ""; }
+    restoreBtn.onclick = (e)=>{
+      e.stopPropagation();
+      hapticImpact("medium");
+      clearZone();
+      restoreBtn.style.display = "none";
+      const box = el(`
+        <div class="confirm-box">
+          <p class="confirm-text">↩️ Ariza #${app.id} — ${escapeHtml(app.full_name)}ga qayta yuborishga ruxsat berilsinmi?</p>
+          <div class="confirm-row">
+            <button type="button" class="cancel-btn">Bekor qilish</button>
+            <button type="button" class="act-btn restore">Ha, ruxsat berish</button>
+          </div>
+        </div>
+      `);
+      box.querySelector(".cancel-btn").onclick = (ev)=>{ ev.stopPropagation(); clearZone(); restoreBtn.style.display = "block"; };
+      box.querySelector(".act-btn.restore").onclick = (ev)=>{
+        ev.stopPropagation();
+        hapticNotify("success");
+        send("restore", {application_id: app.id}, box);
+      };
+      zone.appendChild(box);
+    };
+    return;
+  }
+
   const actions = el(`<div class="app-actions"></div>`);
   const approveBtn = el(`<button type="button" class="act-btn approve">✅ Qabul qilish</button>`);
   const rejectBtn = el(`<button type="button" class="act-btn reject">❌ Rad etish</button>`);
   const reviseBtn = el(`<button type="button" class="act-btn revise">✏️ Tuzatishga qaytarish</button>`);
   actions.appendChild(approveBtn); actions.appendChild(rejectBtn); actions.appendChild(reviseBtn);
   body.appendChild(actions);
-
-  const zone = el(`<div></div>`);
   body.appendChild(zone);
 
   function clearZone(){ zone.innerHTML = ""; }
@@ -286,6 +348,10 @@ function buildBody(app, body){
 function el(html){ const t=document.createElement("template"); t.innerHTML=html.trim(); return t.content.firstChild; }
 
 function renderList(){
+  segEl.querySelectorAll(".seg-btn").forEach(btn=>{
+    btn.classList.toggle("active", !!snapshot && snapshot.mode === btn.dataset.mode);
+  });
+
   if(!snapshot){
     countEl.textContent = "";
     pageInfoEl.textContent = "";
@@ -293,7 +359,9 @@ function renderList(){
     renderMessage("Ma'lumot topilmadi. Botdagi “Admin panel” tugmasidan qaytadan oching.");
     return;
   }
-  countEl.textContent = snapshot.total + " ta kutilmoqda";
+  const isRejected = snapshot.mode === "rejected";
+  titleEl.textContent = isRejected ? "Rad etilgan arizalar" : "Kutilayotgan arizalar";
+  countEl.textContent = snapshot.total + (isRejected ? " ta rad etilgan / tuzatishga qaytarilgan" : " ta kutilmoqda");
   if(snapshot.total){
     const from = snapshot.offset + 1;
     const to = Math.min(snapshot.offset + snapshot.apps.length, snapshot.total);
@@ -306,7 +374,7 @@ function renderList(){
 
   listEl.innerHTML = "";
   if(!snapshot.apps.length){
-    renderMessage("Kutilayotgan arizalar yo‘q. 🎉");
+    renderMessage(isRejected ? "Rad etilgan yoki tuzatishga qaytarilgan arizalar yo‘q." : "Kutilayotgan arizalar yo‘q. 🎉");
     return;
   }
   snapshot.apps.forEach((app, i)=>{
@@ -336,7 +404,7 @@ function renderList(){
       }
       body = el(`<div class="app-body"></div>`);
       card.appendChild(body);
-      buildBody(app, body);
+      buildBody(app, body, isRejected);
       chev.classList.add("open");
     };
     listEl.appendChild(card);
