@@ -259,7 +259,7 @@ const USERNAME_RE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;
 const STEP_DEFS = [
   {id:"full_name", kind:"text", field:"full_name", title:"Ism-familiya", hint:"Ism-familiyani ingliz tilida yozing", placeholder:"Masalan: Aziz Yuldashev", latinOnly:true, twoWords:true},
   {id:"role", kind:"chips", field:"role", options:ROLES, title:"Status", hint:"Statusingizni tanlang"},
-  {id:"phone", kind:"checkpoint", checkpoint:"phone", doneFlag:"phone_done", icon:"📱", title:"Telefon raqam", desc:"Telegram akkauntingizga tegishli telefon raqamni ulashasiz. Bot faqat shu akkauntga tegishli raqamni qabul qiladi.", buttonLabel:"📱 Raqamni yuborish"},
+  {id:"phone", kind:"contact", doneFlag:"phone_done", icon:"📱", title:"Telefon raqam", desc:"Telegram akkauntingizga tegishli telefon raqamni ulashasiz. Bot faqat shu akkauntga tegishli raqamni qabul qiladi.", buttonLabel:"📱 Raqamni yuborish"},
   {id:"supervisor", kind:"text", field:"supervisor", title:"Ilmiy rahbar", hint:"Ism-familiyani ingliz tilida yozing", placeholder:"Rahbaringiz ism-familiyasi", latinOnly:true, twoWords:true},
   {id:"head_position", kind:"text", field:"head_position", title:"Rahbar lavozimi", hint:"Lavozimni ingliz tilida yozing", placeholder:"Masalan: Professor, kafedra mudiri", latinOnly:true},
   {id:"university", kind:"picker", field:"university", title:"Universitet", hint:"Ta'lim muassasangizni tanlang"},
@@ -332,7 +332,7 @@ function isStepComplete(step){
   if(step.kind==="chips" || step.kind==="picker") return !!state[step.field];
   if(step.kind==="section") return !!state.section_id;
   if(step.kind==="direction") return !!state.direction;
-  if(step.kind==="checkpoint") return !!state[step.doneFlag];
+  if(step.kind==="checkpoint" || step.kind==="contact") return !!state[step.doneFlag];
   return true;
 }
 
@@ -393,6 +393,42 @@ function fireCheckpoint(step){
   }
   tg.sendData(JSON.stringify({type:"checkpoint", step: step.checkpoint, data: textPayload()}));
   tg.close();
+}
+
+/* Unlike file checkpoints, sharing a phone number has a dedicated Telegram
+   Web App API (requestContact) that never closes the Mini App: the popup runs
+   in-place, and the number is delivered to the bot directly by Telegram. */
+function fireContactRequest(step){
+  if(!inTelegram){
+    state[step.doneFlag] = true;
+    showToast("Test rejimida: qabul qilingan deb belgilandi", "info");
+    render();
+    return;
+  }
+  if(typeof tg.requestContact !== "function"){
+    showToast("Telegram ilovangizni yangilang va qayta urinib ko‘ring", "info");
+    return;
+  }
+  try{
+    tg.requestContact((result)=>{
+      const sent = typeof result === "object" && result !== null ? result.status === "sent" : !!result;
+      if(sent){
+        hapticNotify("success");
+        state[step.doneFlag] = true;
+      } else {
+        hapticNotify("error");
+        showToast("Telefon raqami ulashilmadi");
+      }
+      render();
+    });
+  }catch(e){
+    showToast("Telegram ilovangizni yangilang va qayta urinib ko‘ring", "info");
+  }
+}
+
+function fireStepAction(step){
+  if(step.kind === "contact") fireContactRequest(step);
+  else fireCheckpoint(step);
 }
 
 function sendFinal(){
@@ -540,8 +576,9 @@ function renderCheckpoint(step, card){
     card.insertAdjacentHTML("beforeend", `<div class="checkpoint-done">✅ Qabul qilindi</div>`);
   }
   if(isDesktop){
-    const btn = el(`<button type="button" class="checkpoint-btn">${state[step.doneFlag] ? "🔁 Qayta yuklash" : step.buttonLabel}</button>`);
-    btn.onclick = ()=> fireCheckpoint(step);
+    const retryLabel = step.kind === "contact" ? "🔁 Qayta yuborish" : "🔁 Qayta yuklash";
+    const btn = el(`<button type="button" class="checkpoint-btn">${state[step.doneFlag] ? retryLabel : step.buttonLabel}</button>`);
+    btn.onclick = ()=> fireStepAction(step);
     card.appendChild(btn);
   }
 }
@@ -581,7 +618,7 @@ function renderStepBody(step, host, singleton){
   else if(step.kind==="picker") renderPicker(step, host);
   else if(step.kind==="section") renderSection(step, host, singleton);
   else if(step.kind==="direction") renderDirection(step, host, singleton);
-  else if(step.kind==="checkpoint") renderCheckpoint(step, host);
+  else if(step.kind==="checkpoint" || step.kind==="contact") renderCheckpoint(step, host);
   else if(step.kind==="review") renderReview(step, host);
 }
 
@@ -710,10 +747,10 @@ function renderWizardStep(){
     return;
   }
   const soloStep = singleton ? findStep(group[0]) : null;
-  if(soloStep && soloStep.kind==="checkpoint"){
+  if(soloStep && (soloStep.kind==="checkpoint" || soloStep.kind==="contact")){
     primaryBtn.textContent = state[soloStep.doneFlag] ? "➡️ Keyingisi" : soloStep.buttonLabel;
     primaryBtn.disabled = false;
-    primaryBtn.onclick = ()=> state[soloStep.doneFlag] ? goNext() : fireCheckpoint(soloStep);
+    primaryBtn.onclick = ()=> state[soloStep.doneFlag] ? goNext() : fireStepAction(soloStep);
     return;
   }
   if(soloStep && ["section","direction","chips","picker"].includes(soloStep.kind)){
@@ -740,7 +777,7 @@ function syncPrimary(group){
   if(isDesktop) return;
   const g = group || visibleGroups().find(gr=>gr.includes(currentId));
   if(!g) return;
-  const anySoloSpecial = g.length===1 && ["checkpoint","review","section","direction","chips","picker"].includes(findStep(g[0]).kind);
+  const anySoloSpecial = g.length===1 && ["checkpoint","contact","review","section","direction","chips","picker"].includes(findStep(g[0]).kind);
   if(anySoloSpecial) return;
   primaryBtn.disabled = !g.every(id=>{
     const step = findStep(id);
