@@ -67,6 +67,12 @@ body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMa
 .seg-btn{flex:1;padding:10px 6px;border:0;border-radius:10px;background:transparent;color:var(--hint);font-weight:700;font-size:12.5px;cursor:pointer;transition:.15s}
 .seg-btn.active{background:var(--accent);color:var(--accent-text)}
 
+.search-row{position:relative;margin-top:10px;display:flex;align-items:center}
+.search-icon{position:absolute;left:13px;font-size:13px;pointer-events:none;opacity:.6}
+.search-input{width:100%;padding:11px 34px 11px 34px;border-radius:12px;border:1.5px solid var(--border);background:var(--card);color:var(--text);font:inherit;font-size:13.5px}
+.search-input:focus{outline:none;border-color:var(--accent)}
+.search-clear{position:absolute;right:6px;width:26px;height:26px;border:0;border-radius:50%;background:var(--border);color:var(--text);font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
 .status-pill{padding:5px 11px;border-radius:999px;font-size:11.5px;font-weight:700}
 .status-pill.rejected{background:color-mix(in srgb,var(--danger) 16%,var(--bg));color:var(--danger)}
 .status-pill.revision_requested{background:color-mix(in srgb,var(--warn) 16%,var(--bg));color:var(--warn)}
@@ -118,6 +124,11 @@ body{background:var(--bg);color:var(--text);font:15px/1.45 -apple-system,BlinkMa
     <button type="button" class="seg-btn active" data-mode="pending">📋 Kutilmoqda</button>
     <button type="button" class="seg-btn" data-mode="approved">✅ Qabul qilingan</button>
     <button type="button" class="seg-btn" data-mode="rejected">↩️ Rad etilgan</button>
+  </div>
+  <div class="search-row">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="search-input" id="search_input" placeholder="Ism, ID, universitet, telefon, telegram...">
+    <button type="button" class="search-clear" id="search_clear" style="display:none">✕</button>
   </div>
   <div id="list"></div>
 </div>
@@ -182,16 +193,46 @@ const pageSize = (data && data.page_size) || 8;
 const VALID_MODES = ["pending", "approved", "rejected"];
 let currentMode = (data && VALID_MODES.includes(data.mode)) ? data.mode : "pending";
 let currentOffset = 0;
+// Each tab keeps its own query, so switching tabs never mixes results.
+const searchQueries = {pending:"", approved:"", rejected:""};
 
 function currentTab(){
   if(!data) return null;
   return data[currentMode] || null;
 }
 
+function normalizeSearch(s){ return (s==null?"":String(s)).toLowerCase(); }
+
+function matchesSearch(app, q){
+  if(!q) return true;
+  const haystack = [
+    app.id, app.full_name, app.university, app.section, app.direction,
+    app.phone, app.telegram_account, app.supervisor, app.role, app.performance,
+  ].map(normalizeSearch).join(" ␟ ");
+  return haystack.includes(q);
+}
+
 const listEl = document.getElementById("list");
 const titleEl = document.getElementById("title");
 const countEl = document.getElementById("count");
 const pageInfoEl = document.getElementById("page_info");
+const searchInput = document.getElementById("search_input");
+const searchClearBtn = document.getElementById("search_clear");
+
+searchInput.addEventListener("input", ()=>{
+  searchQueries[currentMode] = normalizeSearch(searchInput.value);
+  searchClearBtn.style.display = searchInput.value ? "flex" : "none";
+  currentOffset = 0;
+  renderList();
+});
+searchClearBtn.onclick = ()=>{
+  searchInput.value = "";
+  searchQueries[currentMode] = "";
+  searchClearBtn.style.display = "none";
+  currentOffset = 0;
+  renderList();
+  searchInput.focus();
+};
 const prevBtn = document.getElementById("prev_btn");
 const nextBtn = document.getElementById("next_btn");
 const segEl = document.getElementById("seg");
@@ -210,6 +251,8 @@ segEl.querySelectorAll(".seg-btn").forEach(btn=>{
     hapticImpact("light");
     currentMode = target;
     currentOffset = 0;
+    searchInput.value = searchQueries[currentMode];
+    searchClearBtn.style.display = searchQueries[currentMode] ? "flex" : "none";
     renderList();
   };
 });
@@ -385,24 +428,31 @@ function renderList(){
   const meta = MODE_META[currentMode];
   const allApps = tab.apps || [];
   const total = tab.total || 0;
-  if(currentOffset >= allApps.length) currentOffset = Math.max(0, allApps.length - pageSize);
-  const pageApps = allApps.slice(currentOffset, currentOffset + pageSize);
+  const query = searchQueries[currentMode];
+  // The filter runs over the tab's whole loaded list, not just the visible
+  // page, so a match anywhere in the tab is found — not only among the ~8
+  // rows currently on screen.
+  const matchedApps = query ? allApps.filter(app => matchesSearch(app, query)) : allApps;
+  if(currentOffset >= matchedApps.length) currentOffset = Math.max(0, matchedApps.length - pageSize);
+  const pageApps = matchedApps.slice(currentOffset, currentOffset + pageSize);
 
   titleEl.textContent = meta.title;
-  countEl.textContent = total + meta.countSuffix;
-  if(allApps.length){
+  countEl.textContent = query
+    ? `${matchedApps.length} ta topildi (${total}${meta.countSuffix})`
+    : total + meta.countSuffix;
+  if(matchedApps.length){
     const from = currentOffset + 1;
-    const to = Math.min(currentOffset + pageApps.length, allApps.length);
-    pageInfoEl.textContent = `${from}–${to} / ${allApps.length}`;
+    const to = Math.min(currentOffset + pageApps.length, matchedApps.length);
+    pageInfoEl.textContent = `${from}–${to} / ${matchedApps.length}`;
   } else {
     pageInfoEl.textContent = "";
   }
   prevBtn.disabled = currentOffset <= 0;
-  nextBtn.disabled = currentOffset + pageSize >= allApps.length;
+  nextBtn.disabled = currentOffset + pageSize >= matchedApps.length;
 
   listEl.innerHTML = "";
   if(!pageApps.length){
-    renderMessage(meta.empty);
+    renderMessage(query ? "Qidiruvga mos ariza topilmadi." : meta.empty);
     return;
   }
   pageApps.forEach((app, i)=>{
