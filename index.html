@@ -223,7 +223,10 @@ function haptic(kind){ try{ tg.HapticFeedback.impactOccurred(kind||"light"); }ca
 function hapticSelect(){ try{ tg.HapticFeedback.selectionChanged(); }catch(e){} }
 function hapticNotify(kind){ try{ tg.HapticFeedback.notificationOccurred(kind); }catch(e){} }
 
-const SECTIONS = {
+/* Defaults, used until (if ever) a live config is fetched below — see
+   loadRemoteConfig(). Kept as `let` so the fetched, admin-edited values from
+   the admin website can override them without redeploying this static page. */
+let SECTIONS = {
   "1": ["I Section: THERAPY", ["Internal diseases","Faculty and hospital therapy","Internal medicine propaedeutic","Pharmacology","Endocrinology"]],
   "2": ["II Section: SURGERY", ["General surgery","Faculty and hospital surgery","Anesthesiology and resuscitation","Ophthalmology","Otorhinolaryngology, dentistry and maxillo-facial surgery","Traumatology and Orthopedics"]],
   "3": ["III Section: OBSTETRICS AND GYNECOLOGY", ["Obstetrics and gynecology"]],
@@ -235,18 +238,35 @@ const SECTIONS = {
   "9": ["IX Section: NEUROLOGY", ["Neurology","Psychiatry and Medical Psychology","Psychotherapy","Medical Genetics"]],
   "10": ["X Section: FUNDAMENTAL SCIENCES", ["Normal and Pathological Physiology","Human Anatomy and Basics of Surgical Techniques (OXTA)","Pathological Anatomy","Forensic Medicine and Medical Law","Histology and Medical Biology","Medical and Biological Chemistry"]],
 };
-const UNIVERSITIES = [
+let UNIVERSITIES = [
   "Tashkent State Medical University","Tashkent State Medical University Chirchik B","Tashkent State Medical University Termiz B",
   "Urganch Medical Institute","Bukhoro State Medical Institute","Samarkand State Medical University","Tashkent Pharmaceutical Institute",
   "Central Asian Medical University","Andijan State Medical Institute","EMU University","Fergana Medical Institute of Public Health",
   "Military Medical Academy of the Armed Forces of the Republic of Uzbekistan","Karakalpakstan Medical Institute","Other",
 ];
+
+/* If the bot linked to this page with ?config_api=<admin site URL> (only
+   once that site is actually deployed — see ADMIN_SITE_URL in bot.py), pull
+   the live sections/universities from it. Any failure (offline, CORS, admin
+   site down) just leaves the defaults above in place. */
+async function loadRemoteConfig(){
+  try{
+    const api = new URLSearchParams(location.search).get("config_api");
+    if(!api) return;
+    const res = await fetch(api.replace(/\/$/,"") + "/api/public/form-config", {cache:"no-store", signal: AbortSignal.timeout(4000)});
+    if(!res.ok) return;
+    const cfg = await res.json();
+    if(cfg.sections && Object.keys(cfg.sections).length) SECTIONS = cfg.sections;
+    if(Array.isArray(cfg.universities) && cfg.universities.length) UNIVERSITIES = cfg.universities;
+  }catch(e){ /* keep built-in defaults */ }
+}
 const ROLES = [["Student","Student"],["Master","Master"],["Doctoral student","Doctoral student"],["Applicant","Applicant"]];
 const PERFORMANCES = [["Publication only","Faqat maqola"],["Presentation and publication","Taqdimot + maqola"]];
+const PARTICIPATION_FORMATS = [["Offline","Offline"],["Online","Online"]];
 
 const state = {
   full_name:"", role:"", supervisor:"", head_position:"", university:"", section_id:"", section:"",
-  direction:"", performance:"", report_title:"", telegram_account:"", suggestions:"",
+  direction:"", performance:"", participation_format:"", report_title:"", telegram_account:"", suggestions:"",
   phone_done:false, article_done:false, antiplag_done:false, presentation_done:false,
 };
 
@@ -266,6 +286,7 @@ const STEP_DEFS = [
   {id:"section", kind:"section", title:"Seksiya", hint:"10 seksiyadan faqat BITTASI tanlanadi"},
   {id:"direction", kind:"direction", title:"Yo‘nalish", hint:"Shu seksiya ichidan faqat BITTA yo‘nalish tanlanadi"},
   {id:"performance", kind:"chips", field:"performance", options:PERFORMANCES, title:"Qatnashish turi", hint:"Qanday qatnashishni tanlaysiz?"},
+  {id:"participation_format", kind:"chips", field:"participation_format", options:PARTICIPATION_FORMATS, title:"Ishtirok formati", hint:"Konferensiyada qanday ishtirok etasiz?", when: needsPresentation},
   {id:"files", kind:"checkpoint", checkpoint:"files", doneFlag:"article_done", icon:"📄", title:"Maqola va antiplagiat", desc:"Maqolani (DOC/DOCX, bir nechta fayl bo‘lishi mumkin) va antiplagiat ma'lumotnomasini (PDF/JPG/PNG) botga yuborasiz.", buttonLabel:"📎 Fayllarni yuklash", when: needsArticle},
   {id:"report_title", kind:"text", field:"report_title", title:"Ma'ruza mavzusi", hint:"Taqdimot mavzusini kiriting", placeholder:"Ma'ruza mavzusi", when: needsPresentation},
   {id:"presentation", kind:"checkpoint", checkpoint:"presentation", doneFlag:"presentation_done", icon:"📊", title:"Taqdimot fayli", desc:"Taqdimotni PPT yoki PPTX faylida botga yuborasiz.", buttonLabel:"📎 Taqdimotni yuklash", when: needsPresentation},
@@ -279,6 +300,7 @@ const STEP_DEFS = [
 const GROUP_TEMPLATE = [
   ["full_name"], ["role"], ["phone"],
   ["supervisor","head_position","university","section","direction","performance"],
+  ["participation_format"],
   ["files"], ["report_title"], ["presentation"],
   ["telegram_account","suggestions"], ["review"],
 ];
@@ -320,7 +342,7 @@ let resumeScrollDone = false;
 if(!findStep(currentId)) currentId = "full_name";
 
 function textPayload(){
-  const keys = ["full_name","role","supervisor","head_position","university","section_id","section","direction","performance","report_title","telegram_account","suggestions"];
+  const keys = ["full_name","role","supervisor","head_position","university","section_id","section","direction","performance","participation_format","report_title","telegram_account","suggestions"];
   const out = {};
   keys.forEach(k=> out[k] = state[k] || "");
   return out;
@@ -589,6 +611,7 @@ function renderReview(step, card){
     ["Rahbar lavozimi", state.head_position], ["Universitet", state.university], ["Seksiya", state.section],
     ["Yo‘nalish", state.direction], ["Qatnashish turi", state.performance],
   ];
+  if(needsPresentation(state)) rows.push(["Ishtirok formati", state.participation_format]);
   if(needsPresentation(state)) rows.push(["Ma'ruza mavzusi", state.report_title]);
   rows.push(["Telegram akkaunt", state.telegram_account]);
   const box = el(`<div></div>`);
@@ -793,7 +816,7 @@ function render(){
 backBtn.onclick = goBack;
 try{ tg.BackButton.onClick(goBack); }catch(e){}
 
-render();
+loadRemoteConfig().then(render);
 </script>
 </body>
 </html>
