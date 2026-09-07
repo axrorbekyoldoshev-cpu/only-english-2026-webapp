@@ -170,8 +170,8 @@ input.field-invalid:focus,textarea.field-invalid:focus{box-shadow:0 0 0 3px rgba
 
 <div class="navbar">
   <div class="navbar-inner">
-    <button class="nav-btn secondary" id="back_btn" type="button">Orqaga</button>
-    <button class="nav-btn primary" id="primary_btn" type="button">Davom etish</button>
+    <button class="nav-btn secondary" id="back_btn" type="button">Back / Orqaga</button>
+    <button class="nav-btn primary" id="primary_btn" type="button">Continue / Davom etish</button>
   </div>
 </div>
 
@@ -180,8 +180,8 @@ input.field-invalid:focus,textarea.field-invalid:focus{box-shadow:0 0 0 3px rgba
 <div class="sheet-backdrop" id="uni_backdrop"></div>
 <div class="sheet" id="uni_sheet">
   <div class="sheet-handle"></div>
-  <p class="sheet-title">Universitet / tashkilotni tanlang</p>
-  <input type="text" class="sheet-search" id="uni_search" placeholder="Qidirish...">
+  <p class="sheet-title">Select university / organization — Universitet / tashkilotni tanlang</p>
+  <input type="text" class="sheet-search" id="uni_search" placeholder="Search... / Qidirish...">
   <div class="sheet-list" id="uni_list"></div>
 </div>
 
@@ -260,8 +260,8 @@ async function loadRemoteConfig(){
     if(Array.isArray(cfg.universities) && cfg.universities.length) UNIVERSITIES = cfg.universities;
   }catch(e){ /* keep built-in defaults */ }
 }
-const ROLES = [["Student","Student"],["Master","Master"],["Doctoral student","Doctoral student"],["Applicant","Applicant"]];
-const PERFORMANCES = [["Publication only","Faqat maqola"],["Presentation and publication","Taqdimot + maqola"]];
+const ROLES = [["Student","Student / Talaba"],["Master","Master / Magistrant"],["Doctoral student","Doctoral student / Doktorant"],["Applicant","Applicant / Izlanuvchi"]];
+const PERFORMANCES = [["Publication only","Publication only / Faqat maqola"],["Presentation and publication","Presentation and publication / Taqdimot + maqola"]];
 const PARTICIPATION_FORMATS = [["Offline","Offline"],["Online","Online"]];
 
 const state = {
@@ -277,22 +277,22 @@ const NAME_RE = /^[A-Za-z][A-Za-z .'-]*$/;
 const USERNAME_RE = /^[A-Za-z][A-Za-z0-9_]{4,31}$/;
 
 const STEP_DEFS = [
-  {id:"full_name", kind:"text", field:"full_name", title:"Ism-familiya", hint:"Ism-familiyani ingliz tilida yozing", placeholder:"Masalan: Aziz Yuldashev", latinOnly:true, twoWords:true},
-  {id:"role", kind:"chips", field:"role", options:ROLES, title:"Status", hint:"Statusingizni tanlang"},
-  {id:"phone", kind:"contact", doneFlag:"phone_done", icon:"📱", title:"Telefon raqam", desc:"Telegram akkauntingizga tegishli telefon raqamni ulashasiz. Bot faqat shu akkauntga tegishli raqamni qabul qiladi.", buttonLabel:"📱 Raqamni yuborish"},
-  {id:"supervisor", kind:"text", field:"supervisor", title:"Ilmiy rahbar", hint:"Ism-familiyani ingliz tilida yozing", placeholder:"Rahbaringiz ism-familiyasi", latinOnly:true, twoWords:true},
-  {id:"head_position", kind:"text", field:"head_position", title:"Rahbar lavozimi", hint:"Lavozimni ingliz tilida yozing", placeholder:"Masalan: Professor, kafedra mudiri", latinOnly:true},
-  {id:"university", kind:"picker", field:"university", title:"Universitet", hint:"Ta'lim muassasangizni tanlang"},
-  {id:"section", kind:"section", title:"Seksiya", hint:"10 seksiyadan faqat BITTASI tanlanadi"},
-  {id:"direction", kind:"direction", title:"Yo‘nalish", hint:"Shu seksiya ichidan faqat BITTA yo‘nalish tanlanadi"},
-  {id:"performance", kind:"chips", field:"performance", options:PERFORMANCES, title:"Qatnashish turi", hint:"Qanday qatnashishni tanlaysiz?"},
-  {id:"participation_format", kind:"chips", field:"participation_format", options:PARTICIPATION_FORMATS, title:"Ishtirok formati", hint:"Konferensiyada qanday ishtirok etasiz?", when: needsPresentation},
-  {id:"files", kind:"checkpoint", checkpoint:"files", doneFlag:"article_done", icon:"📄", title:"Maqola va antiplagiat", desc:"Maqolani (DOC/DOCX, bir nechta fayl bo‘lishi mumkin) va antiplagiat ma'lumotnomasini (PDF/JPG/PNG) botga yuborasiz.", buttonLabel:"📎 Fayllarni yuklash", when: needsArticle},
-  {id:"report_title", kind:"text", field:"report_title", title:"Ma'ruza mavzusi", hint:"Taqdimot mavzusini kiriting", placeholder:"Ma'ruza mavzusi", when: needsPresentation},
-  {id:"presentation", kind:"checkpoint", checkpoint:"presentation", doneFlag:"presentation_done", icon:"📊", title:"Taqdimot fayli", desc:"Taqdimotni PPT yoki PPTX faylida botga yuborasiz.", buttonLabel:"📎 Taqdimotni yuklash", when: needsPresentation},
-  {id:"telegram_account", kind:"text", field:"telegram_account", title:"Telegram akkaunt", hint:"Telegram foydalanuvchi nomingiz", placeholder:"@Yuldashev_A23", isUsername:true},
-  {id:"suggestions", kind:"textarea", field:"suggestions", title:"Takliflar", hint:"Taklif yoki savollar (ixtiyoriy)", placeholder:"Bo‘lmasa bo‘sh qoldiring", optional:true},
-  {id:"review", kind:"review", title:"Tekshirish", hint:"Ma'lumotlarni tekshirib, yuboring"},
+  {id:"full_name", kind:"text", field:"full_name", title:"Full name / Ism-familiya", hint:"Write your full name in Latin letters.<br>Ism-familiyani lotin harflarida yozing.", placeholder:"e.g. Aziz Yuldashev / Masalan: Aziz Yuldashev", latinOnly:true, twoWords:true},
+  {id:"role", kind:"chips", field:"role", options:ROLES, title:"Status / Status", hint:"Select your status.<br>Statusingizni tanlang."},
+  {id:"phone", kind:"contact", doneFlag:"phone_done", icon:"📱", title:"Phone number / Telefon raqam", desc:"Share the phone number linked to your Telegram account. The bot only accepts a number that belongs to this account.<br><br>Telegram akkauntingizga tegishli telefon raqamni ulashasiz. Bot faqat shu akkauntga tegishli raqamni qabul qiladi.", buttonLabel:"📱 Send number / Raqamni yuborish"},
+  {id:"supervisor", kind:"text", field:"supervisor", title:"Academic supervisor / Ilmiy rahbar", hint:"Write the name in Latin letters.<br>Ism-familiyani lotin harflarida yozing.", placeholder:"Supervisor's full name / Rahbaringiz ism-familiyasi", latinOnly:true, twoWords:true},
+  {id:"head_position", kind:"text", field:"head_position", title:"Supervisor's position / Rahbar lavozimi", hint:"Write the position in Latin letters.<br>Lavozimni lotin harflarida yozing.", placeholder:"e.g. Professor, Head of Department / Masalan: Professor, kafedra mudiri", latinOnly:true},
+  {id:"university", kind:"picker", field:"university", title:"University / Universitet", hint:"Select your educational institution.<br>Ta'lim muassasangizni tanlang."},
+  {id:"section", kind:"section", title:"Section / Seksiya", hint:"Choose ONLY ONE of the 10 sections.<br>10 seksiyadan faqat BITTASI tanlanadi."},
+  {id:"direction", kind:"direction", title:"Direction / Yo‘nalish", hint:"Choose ONLY ONE direction within this section.<br>Shu seksiya ichidan faqat BITTA yo‘nalish tanlanadi."},
+  {id:"performance", kind:"chips", field:"performance", options:PERFORMANCES, title:"Participation type / Qatnashish turi", hint:"How would you like to participate?<br>Qanday qatnashishni tanlaysiz?"},
+  {id:"participation_format", kind:"chips", field:"participation_format", options:PARTICIPATION_FORMATS, title:"Participation format / Ishtirok formati", hint:"How will you take part in the conference?<br>Konferensiyada qanday ishtirok etasiz?", when: needsPresentation},
+  {id:"files", kind:"checkpoint", checkpoint:"files", doneFlag:"article_done", icon:"📄", title:"Article and anti-plagiarism / Maqola va antiplagiat", desc:"Send the article (DOC/DOCX, multiple files allowed) and the anti-plagiarism certificate (PDF/JPG/PNG) to the bot.<br><br>Maqolani (DOC/DOCX, bir nechta fayl bo‘lishi mumkin) va antiplagiat ma'lumotnomasini (PDF/JPG/PNG) botga yuborasiz.", buttonLabel:"📎 Upload files / Fayllarni yuklash", when: needsArticle},
+  {id:"report_title", kind:"text", field:"report_title", title:"Presentation topic / Ma'ruza mavzusi", hint:"Enter your presentation topic.<br>Taqdimot mavzusini kiriting.", placeholder:"Presentation topic / Ma'ruza mavzusi", when: needsPresentation},
+  {id:"presentation", kind:"checkpoint", checkpoint:"presentation", doneFlag:"presentation_done", icon:"📊", title:"Presentation file / Taqdimot fayli", desc:"Send your presentation to the bot as a PPT or PPTX file.<br><br>Taqdimotni PPT yoki PPTX faylida botga yuborasiz.", buttonLabel:"📎 Upload presentation / Taqdimotni yuklash", when: needsPresentation},
+  {id:"telegram_account", kind:"text", field:"telegram_account", title:"Telegram account / Telegram akkaunt", hint:"Your Telegram username.<br>Telegram foydalanuvchi nomingiz.", placeholder:"@Yuldashev_A23", isUsername:true},
+  {id:"suggestions", kind:"textarea", field:"suggestions", title:"Suggestions / Takliflar", hint:"Suggestions or questions (optional).<br>Taklif yoki savollar (ixtiyoriy).", placeholder:"Leave empty if none / Bo‘lmasa bo‘sh qoldiring", optional:true},
+  {id:"review", kind:"review", title:"Review / Tekshirish", hint:"Check your details and submit.<br>Ma'lumotlarni tekshirib, yuboring."},
 ];
 
 /* Desktop merges consecutive plain-field steps onto one screen; phones get
@@ -362,20 +362,20 @@ function isStepComplete(step){
    actually make (wrong script, single word, malformed @username). */
 function validateField(step){
   if(!step) return {valid:true};
-  if(!isStepComplete(step)) return {valid:false, message:"Bu maydon majburiy"};
+  if(!isStepComplete(step)) return {valid:false, message:"This field is required / Bu maydon majburiy"};
   if(step.kind!=="text") return {valid:true};
   const val = (state[step.field]||"").trim();
   if(!val) return {valid:true};
   if(step.latinOnly && !NAME_RE.test(val)){
-    return {valid:false, message:"Faqat lotin (ingliz) harflarida yozing"};
+    return {valid:false, message:"Use Latin (English) letters only / Faqat lotin (ingliz) harflarida yozing"};
   }
   if(step.twoWords && val.split(/\s+/).filter(Boolean).length < 2){
-    return {valid:false, message:"Ism va familiyani to‘liq yozing"};
+    return {valid:false, message:"Write your full first and last name / Ism va familiyani to‘liq yozing"};
   }
   if(step.isUsername){
     const uname = val.replace(/^@/, "");
     if(!USERNAME_RE.test(uname)){
-      return {valid:false, message:"Username noto‘g‘ri (masalan: @Yuldashev_A23, 5-32 belgi)"};
+      return {valid:false, message:"Invalid username (e.g. @Yuldashev_A23, 5-32 characters) / Username noto‘g‘ri (masalan: @Yuldashev_A23, 5-32 belgi)"};
     }
   }
   return {valid:true};
@@ -409,7 +409,7 @@ function goBack(){
 function fireCheckpoint(step){
   if(!inTelegram){
     state[step.doneFlag] = true;
-    showToast("Test rejimida: qabul qilingan deb belgilandi", "info");
+    showToast("Test mode: marked as accepted / Test rejimida: qabul qilingan deb belgilandi", "info");
     render();
     return;
   }
@@ -423,12 +423,12 @@ function fireCheckpoint(step){
 function fireContactRequest(step){
   if(!inTelegram){
     state[step.doneFlag] = true;
-    showToast("Test rejimida: qabul qilingan deb belgilandi", "info");
+    showToast("Test mode: marked as accepted / Test rejimida: qabul qilingan deb belgilandi", "info");
     render();
     return;
   }
   if(typeof tg.requestContact !== "function"){
-    showToast("Telegram ilovangizni yangilang va qayta urinib ko‘ring", "info");
+    showToast("Update your Telegram app and try again / Telegram ilovangizni yangilang va qayta urinib ko‘ring", "info");
     return;
   }
   try{
@@ -439,12 +439,12 @@ function fireContactRequest(step){
         state[step.doneFlag] = true;
       } else {
         hapticNotify("error");
-        showToast("Telefon raqami ulashilmadi");
+        showToast("Phone number was not shared / Telefon raqami ulashilmadi");
       }
       render();
     });
   }catch(e){
-    showToast("Telegram ilovangizni yangilang va qayta urinib ko‘ring", "info");
+    showToast("Update your Telegram app and try again / Telegram ilovangizni yangilang va qayta urinib ko‘ring", "info");
   }
 }
 
@@ -469,7 +469,7 @@ function renderUniList(filter){
   const q = (filter||"").trim().toLowerCase();
   const items = UNIVERSITIES.filter(u=>u.toLowerCase().includes(q));
   uniList.innerHTML = "";
-  if(!items.length){ uniList.innerHTML = '<div class="sheet-empty">Hech narsa topilmadi</div>'; return; }
+  if(!items.length){ uniList.innerHTML = '<div class="sheet-empty">Nothing found / Hech narsa topilmadi</div>'; return; }
   items.forEach(name=>{
     const row = document.createElement("div");
     row.className = "sheet-item" + (state.university===name ? " active" : "");
@@ -508,7 +508,7 @@ function touchGroup(group){
 }
 
 function renderHeader(step){
-  return `<p class="step-eyebrow">Bosqich</p><h2 class="step-title">${step.title}</h2><p class="step-hint">${step.hint||""}</p>`;
+  return `<p class="step-eyebrow">Step / Bosqich</p><h2 class="step-title">${step.title}</h2><p class="step-hint">${step.hint||""}</p>`;
 }
 
 function renderText(step, host, singleton){
@@ -553,7 +553,7 @@ function renderChips(step, host, singleton){
 }
 
 function renderPicker(step, host){
-  const trigger = el(`<div class="select-trigger"><span class="val ${state.university?"":"placeholder"}">${state.university||"Tanlash uchun bosing"}</span><span class="chev">▾</span></div>`);
+  const trigger = el(`<div class="select-trigger"><span class="val ${state.university?"":"placeholder"}">${state.university||"Tap to select / Tanlash uchun bosing"}</span><span class="chev">▾</span></div>`);
   trigger.onclick = openUniSheet;
   host.appendChild(trigger);
 }
@@ -575,7 +575,7 @@ function renderSection(step, host, singleton){
 
 function renderDirection(step, host, singleton){
   if(!state.section_id){
-    host.insertAdjacentHTML("beforeend", `<p class="field-block-hint">Avval seksiyani tanlang.</p>`);
+    host.insertAdjacentHTML("beforeend", `<p class="field-block-hint">Select a section first.<br>Avval seksiyani tanlang.</p>`);
     return;
   }
   const box = el(`<div class="tile-list"></div>`);
@@ -595,10 +595,10 @@ function renderDirection(step, host, singleton){
 function renderCheckpoint(step, card){
   card.insertAdjacentHTML("beforeend", `<div class="checkpoint-icon">${step.icon}</div><p class="checkpoint-desc">${step.desc}</p>`);
   if(state[step.doneFlag]){
-    card.insertAdjacentHTML("beforeend", `<div class="checkpoint-done">✅ Qabul qilindi</div>`);
+    card.insertAdjacentHTML("beforeend", `<div class="checkpoint-done">✅ Accepted / Qabul qilindi</div>`);
   }
   if(isDesktop){
-    const retryLabel = step.kind === "contact" ? "🔁 Qayta yuborish" : "🔁 Qayta yuklash";
+    const retryLabel = step.kind === "contact" ? "🔁 Resend / Qayta yuborish" : "🔁 Reupload / Qayta yuklash";
     const btn = el(`<button type="button" class="checkpoint-btn">${state[step.doneFlag] ? retryLabel : step.buttonLabel}</button>`);
     btn.onclick = ()=> fireStepAction(step);
     card.appendChild(btn);
@@ -607,13 +607,13 @@ function renderCheckpoint(step, card){
 
 function renderReview(step, card){
   const rows = [
-    ["Ism-familiya", state.full_name], ["Status", state.role], ["Ilmiy rahbar", state.supervisor],
-    ["Rahbar lavozimi", state.head_position], ["Universitet", state.university], ["Seksiya", state.section],
-    ["Yo‘nalish", state.direction], ["Qatnashish turi", state.performance],
+    ["Full name / Ism-familiya", state.full_name], ["Status / Status", state.role], ["Supervisor / Ilmiy rahbar", state.supervisor],
+    ["Supervisor's position / Rahbar lavozimi", state.head_position], ["University / Universitet", state.university], ["Section / Seksiya", state.section],
+    ["Direction / Yo‘nalish", state.direction], ["Participation type / Qatnashish turi", state.performance],
   ];
-  if(needsPresentation(state)) rows.push(["Ishtirok formati", state.participation_format]);
-  if(needsPresentation(state)) rows.push(["Ma'ruza mavzusi", state.report_title]);
-  rows.push(["Telegram akkaunt", state.telegram_account]);
+  if(needsPresentation(state)) rows.push(["Participation format / Ishtirok formati", state.participation_format]);
+  if(needsPresentation(state)) rows.push(["Presentation topic / Ma'ruza mavzusi", state.report_title]);
+  rows.push(["Telegram account / Telegram akkaunt", state.telegram_account]);
   const box = el(`<div></div>`);
   rows.forEach(([k,v])=>{
     box.appendChild(el(`<div class="review-row"><span class="k">${k}</span><span class="v">${(v||"—")}</span></div>`));
@@ -621,13 +621,13 @@ function renderReview(step, card){
   card.appendChild(box);
 
   const flags = [
-    {label:"Telefon raqam", ok: state.phone_done, step:"phone"},
+    {label:"Phone number / Telefon raqam", ok: state.phone_done, step:"phone"},
   ];
-  if(needsArticle(state)) flags.push({label:"Maqola va antiplagiat", ok: state.article_done, step:"files"});
-  if(needsPresentation(state)) flags.push({label:"Taqdimot fayli", ok: state.presentation_done, step:"presentation"});
+  if(needsArticle(state)) flags.push({label:"Article and anti-plagiarism / Maqola va antiplagiat", ok: state.article_done, step:"files"});
+  if(needsPresentation(state)) flags.push({label:"Presentation file / Taqdimot fayli", ok: state.presentation_done, step:"presentation"});
   const flagBox = el(`<div style="margin-top:10px"></div>`);
   flags.forEach(f=>{
-    const row = el(`<div class="review-flag ${f.ok?"ok":"missing"}">${f.ok?"✅":"⚠️"} ${f.label}${f.ok?"":" — yuklanmagan, bosing"}</div>`);
+    const row = el(`<div class="review-flag ${f.ok?"ok":"missing"}">${f.ok?"✅":"⚠️"} ${f.label}${f.ok?"":" — not uploaded, tap to add / yuklanmagan, bosing"}</div>`);
     if(!f.ok) row.onclick = ()=>goToId(f.step);
     flagBox.appendChild(row);
   });
@@ -671,7 +671,7 @@ function renderGroupInto(group, card){
     card.insertAdjacentHTML("beforeend", renderHeader(step));
     renderStepBody(step, card, false);
   } else {
-    card.insertAdjacentHTML("beforeend", `<p class="step-eyebrow">Bosqich</p><h2 class="step-title">Ariza ma'lumotlari</h2><p class="step-hint">Quyidagi maydonlarni to‘ldiring</p>`);
+    card.insertAdjacentHTML("beforeend", `<p class="step-eyebrow">Step / Bosqich</p><h2 class="step-title">Application details / Ariza ma'lumotlari</h2><p class="step-hint">Fill in the fields below.<br>Quyidagi maydonlarni to‘ldiring.</p>`);
     const grid = el(`<div class="multi-grid"></div>`);
     group.forEach(id=>{
       const step = findStep(id);
@@ -712,7 +712,7 @@ function renderDesktopFull(){
 
   backBtn.style.visibility = "hidden";
   try{ tg.BackButton.hide(); }catch(e){}
-  primaryBtn.textContent = "✅ Yuborish";
+  primaryBtn.textContent = "✅ Submit / Yuborish";
   primaryBtn.disabled = false;
   primaryBtn.onclick = ()=>{
     let firstBad = null;
@@ -723,7 +723,7 @@ function renderDesktopFull(){
     });
     if(firstBad){
       hapticNotify("error");
-      showToast("Iltimos, belgilangan maydonlarni to‘g‘rilang");
+      showToast("Please fix the highlighted fields / Iltimos, belgilangan maydonlarni to‘g‘rilang");
       const el2 = document.getElementById("card_"+firstBad[0]);
       if(el2) el2.scrollIntoView({behavior:"smooth", block:"center"});
       return;
@@ -764,31 +764,31 @@ function renderWizardStep(){
 
   if(singleton && group[0]==="review"){
     const ready = allComplete();
-    primaryBtn.textContent = "✅ Yuborish";
+    primaryBtn.textContent = "✅ Submit / Yuborish";
     primaryBtn.disabled = !ready;
     primaryBtn.onclick = sendFinal;
     return;
   }
   const soloStep = singleton ? findStep(group[0]) : null;
   if(soloStep && (soloStep.kind==="checkpoint" || soloStep.kind==="contact")){
-    primaryBtn.textContent = state[soloStep.doneFlag] ? "➡️ Keyingisi" : soloStep.buttonLabel;
+    primaryBtn.textContent = state[soloStep.doneFlag] ? "➡️ Next / Keyingisi" : soloStep.buttonLabel;
     primaryBtn.disabled = false;
     primaryBtn.onclick = ()=> state[soloStep.doneFlag] ? goNext() : fireStepAction(soloStep);
     return;
   }
   if(soloStep && ["section","direction","chips","picker"].includes(soloStep.kind)){
-    primaryBtn.textContent = "Davom etish ➡️";
+    primaryBtn.textContent = "Continue ➡️ / Davom etish";
     primaryBtn.disabled = !isStepComplete(soloStep);
     primaryBtn.onclick = goNext;
     return;
   }
-  primaryBtn.textContent = "Davom etish ➡️";
+  primaryBtn.textContent = "Continue ➡️ / Davom etish";
   primaryBtn.onclick = ()=>{
     touchGroup(group);
     if(!groupValid(group)){
       const bad = group.map(findStep).find(s=>!validateField(s).valid);
       hapticNotify("error");
-      showToast(validateField(bad).message || "Maydonlarni to‘g‘ri to‘ldiring");
+      showToast(validateField(bad).message || "Fill in the fields correctly / Maydonlarni to‘g‘ri to‘ldiring");
       return;
     }
     goNext();
