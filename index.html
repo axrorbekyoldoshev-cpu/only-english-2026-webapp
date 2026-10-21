@@ -233,6 +233,9 @@ input:focus,textarea:focus,.sheet-search:focus{border-color:var(--accent);box-sh
 .tile .check{width:22px;height:22px;border:1px solid var(--border-strong);background:var(--glass-inner)}
 .tile .check .ico{width:14px;height:14px;fill:transparent;vertical-align:0}
 .tile.active .check{background:linear-gradient(180deg,#60a5fa,#2563eb);border-color:rgba(255,255,255,.5)}
+.tile .tile-text{display:flex;flex-direction:column;gap:3px}
+.tile small.pub-only,.chip small.pub-only{display:block;font-size:11.5px;font-weight:700;color:#f59e0b}
+.chip.closed{opacity:.55;cursor:not-allowed;border-style:dashed}
 .tile.active .check .ico{fill:#fff}
 
 /* checkpoint (phone / file upload) */
@@ -404,8 +407,17 @@ async function loadRemoteConfig(){
     const cfg = await res.json();
     if(cfg.sections && Object.keys(cfg.sections).length) SECTIONS = cfg.sections;
     if(Array.isArray(cfg.universities) && cfg.universities.length) UNIVERSITIES = cfg.universities;
+    if(Array.isArray(cfg.closed_sections)) CLOSED_SECTIONS = new Set(cfg.closed_sections.map(String));
   }catch(e){ /* keep built-in defaults */ }
 }
+/* Sections whose presentation places are taken: still selectable, but only
+   with "Publication only".
+   The bot passes ?open_sec= for an applicant whose application in that
+   section was sent back for revision — they keep their place. The bot
+   re-checks this server-side, so it is only a convenience here. */
+let CLOSED_SECTIONS = new Set();
+const OPEN_SECTION = new URLSearchParams(location.search).get("open_sec") || "";
+function isSectionClosed(id){ return CLOSED_SECTIONS.has(String(id)) && String(id) !== OPEN_SECTION; }
 const ROLES = [["Student","Student / Talaba"],["Master","Master / Magistrant"],["Doctoral student","Doctoral student / Doktorant"],["Applicant","Applicant / Izlanuvchi"]];
 const PERFORMANCES = [["Publication only","Publication only / Faqat maqola"],["Presentation and publication","Presentation and publication / Taqdimot + maqola"]];
 const PARTICIPATION_FORMATS = [["Offline","Offline"],["Online","Online"]];
@@ -499,6 +511,7 @@ function isStepComplete(step){
   if(step.kind==="text" || step.kind==="textarea") return step.optional || !!(state[step.field] && state[step.field].trim());
   if(step.kind==="chips" || step.kind==="picker") return !!state[step.field];
   if(step.kind==="section") return !!state.section_id;
+  if(step.field==="performance" && state.performance==="Presentation and publication" && isSectionClosed(state.section_id)) return false;
   if(step.kind==="direction") return !!state.direction;
   if(step.kind==="checkpoint" || step.kind==="contact") return !!state[step.doneFlag];
   return true;
@@ -684,7 +697,18 @@ function renderTextarea(step, host){
 
 function renderChips(step, host, singleton){
   const box = el(`<div class="chip-group"></div>`);
+  const presentationClosed = step.field === "performance" && isSectionClosed(state.section_id);
+  if(presentationClosed && state.performance === "Presentation and publication") state.performance = "";
   step.options.forEach(([value,label])=>{
+    if(presentationClosed && value === "Presentation and publication"){
+      const chip = el(`<div class="chip closed">${label}<small class="pub-only">No places left / Kvota mavjud emas</small></div>`);
+      chip.onclick = ()=>{
+        hapticNotify("error");
+        try{ tg.showAlert("There are no presentation places left in this section — publication only.\n\nBu seksiyada taqdimot uchun kvota qolmagan — faqat maqola orqali qatnashish mumkin."); }catch(e){}
+      };
+      box.appendChild(chip);
+      return;
+    }
     const chip = el(`<div class="chip${state[step.field]===value?" active":""}">${label}</div>`);
     chip.onclick = ()=>{
       state[step.field] = value;
@@ -707,7 +731,8 @@ function renderPicker(step, host){
 function renderSection(step, host, singleton){
   const box = el(`<div class="tile-list"></div>`);
   Object.entries(SECTIONS).forEach(([id,val])=>{
-    const tile = el(`<div class="tile${state.section_id===id?" active":""}"><span>${val[0]}</span><span class="check">${ico("check")}</span></div>`);
+    const note = isSectionClosed(id) ? `<small class="pub-only">Publication only — no presentation places / Faqat maqola — taqdimotga joy qolmagan</small>` : "";
+    const tile = el(`<div class="tile${state.section_id===id?" active":""}"><span class="tile-text"><span>${val[0]}</span>${note}</span><span class="check">${ico("check")}</span></div>`);
     tile.onclick = ()=>{
       if(state.section_id !== id){ state.section_id = id; state.section = val[0]; state.direction = ""; }
       hapticSelect();
