@@ -651,6 +651,9 @@ uniSearch.addEventListener("input", ()=>renderUniList(uniSearch.value));
 
 /* ---- Renderers ---- */
 function el(html){ const t=document.createElement("template"); t.innerHTML=html.trim(); return t.content.firstChild; }
+/* Anything typed by the applicant or loaded from the admin site must go
+   through esc() before it is put into el()/innerHTML markup. */
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]); }
 
 function updateFieldError(step){
   const errEl = document.getElementById("err_"+step.id);
@@ -723,7 +726,7 @@ function renderChips(step, host, singleton){
 }
 
 function renderPicker(step, host){
-  const trigger = el(`<div class="select-trigger"><span class="val ${state.university?"":"placeholder"}">${state.university||"Tap to select / Tanlash uchun bosing"}</span><span class="chev">${ico("chev")}</span></div>`);
+  const trigger = el(`<div class="select-trigger"><span class="val ${state.university?"":"placeholder"}">${state.university ? esc(state.university) : "Tap to select / Tanlash uchun bosing"}</span><span class="chev">${ico("chev")}</span></div>`);
   trigger.onclick = openUniSheet;
   host.appendChild(trigger);
 }
@@ -732,7 +735,7 @@ function renderSection(step, host, singleton){
   const box = el(`<div class="tile-list"></div>`);
   Object.entries(SECTIONS).forEach(([id,val])=>{
     const note = isSectionClosed(id) ? `<small class="pub-only">Publication only — no presentation places / Faqat maqola — taqdimotga joy qolmagan</small>` : "";
-    const tile = el(`<div class="tile${state.section_id===id?" active":""}"><span class="tile-text"><span>${val[0]}</span>${note}</span><span class="check">${ico("check")}</span></div>`);
+    const tile = el(`<div class="tile${state.section_id===id?" active":""}"><span class="tile-text"><span>${esc(val[0])}</span>${note}</span><span class="check">${ico("check")}</span></div>`);
     tile.onclick = ()=>{
       if(state.section_id !== id){ state.section_id = id; state.section = val[0]; state.direction = ""; }
       hapticSelect();
@@ -751,7 +754,7 @@ function renderDirection(step, host, singleton){
   }
   const box = el(`<div class="tile-list"></div>`);
   SECTIONS[state.section_id][1].forEach(name=>{
-    const tile = el(`<div class="tile${state.direction===name?" active":""}"><span>${name}</span><span class="check">${ico("check")}</span></div>`);
+    const tile = el(`<div class="tile${state.direction===name?" active":""}"><span>${esc(name)}</span><span class="check">${ico("check")}</span></div>`);
     tile.onclick = ()=>{
       state.direction = name;
       hapticSelect();
@@ -787,7 +790,7 @@ function renderReview(step, card){
   rows.push(["Telegram account / Telegram akkaunt", state.telegram_account]);
   const box = el(`<div class="review-list"></div>`);
   rows.forEach(([k,v])=>{
-    box.appendChild(el(`<div class="review-row"><span class="k">${k}</span><span class="v">${(v||"—")}</span></div>`));
+    box.appendChild(el(`<div class="review-row"><span class="k">${k}</span><span class="v">${v ? esc(v) : "—"}</span></div>`));
   });
   card.appendChild(box);
 
